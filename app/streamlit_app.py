@@ -42,13 +42,13 @@ st.set_page_config(page_title="Lung Tumor Detection Viewer", page_icon="🫁", l
 st.markdown(
     """
     <style>
-    .block-container {padding-top: 2.6rem; padding-bottom: 0.5rem; max-width: 100%;}
+    .block-container {padding-top: 4rem; padding-bottom: 0.5rem; max-width: 100%;}
     [data-testid="stSidebarContent"] {padding-top: 0.5rem;}
     [data-testid="stSidebarUserContent"] {padding-top: 1rem;}
     [data-testid="stVerticalBlock"] {gap: 0.55rem;}
     [data-testid="stImage"] img {max-height: 38vh; width: auto !important; margin: 0 auto; display: block;}
     [data-testid="stImageCaption"] {margin-top: 0;}
-    h5 {padding: 0 !important; margin: 0 !important;}
+    h5 {padding: 0.2rem 0 0.5rem 0 !important; margin: 0 !important; line-height: 1.3 !important;}
     </style>
     """,
     unsafe_allow_html=True,
@@ -168,11 +168,11 @@ def jump_tumor(direction: int):
 
 st.sidebar.slider(f"Slice (of {n})", 1, max(n, 1), key="slice_no")
 b = st.sidebar.columns(2)
-b[0].button("◀ Prev", on_click=step, args=(-1,), use_container_width=True)
-b[1].button("Next ▶", on_click=step, args=(1,), use_container_width=True)
-b[0].button("◀ Tumor", on_click=jump_tumor, args=(-1,), use_container_width=True,
+b[0].button("◀ Prev", on_click=step, args=(-1,), width="stretch")
+b[1].button("Next ▶", on_click=step, args=(1,), width="stretch")
+b[0].button("◀ Tumor", on_click=jump_tumor, args=(-1,), width="stretch",
             disabled=not tumor_slices, help="Previous slice with an expert box")
-b[1].button("Tumor ▶", on_click=jump_tumor, args=(1,), use_container_width=True,
+b[1].button("Tumor ▶", on_click=jump_tumor, args=(1,), width="stretch",
             disabled=not tumor_slices, help="Next slice with an expert box")
 
 tuned = DS.thresholds()
@@ -224,7 +224,7 @@ for col, view in zip(cols, config.VIEWS):
             continue
         shown = draw_overlay(to_display(img, config.DISPLAY.get(view)), gts, preds,
                              config.MATCH_IOU, show_gt, show_pred)
-        st.image(shown, caption=config.VIEWS[view], use_container_width=True)
+        st.image(shown, caption=config.VIEWS[view], width="stretch")
 
 # Whole-scan strip: where the expert marked tumor vs. the model's confidence
 strip = pd.DataFrame({"slice": range(1, n + 1), "expert": has_gt.astype(float), "conf": top_conf})
