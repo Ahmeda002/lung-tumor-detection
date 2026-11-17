@@ -5,6 +5,8 @@ COMP 4500 Senior Project · Tennessee State University, Department of Computer S
 **Team:** Ahmed Abdikadir and Julian Padron
 **Advisor:** Dr. Ali Sekmen
 
+**[View the presentation](https://ahmeda002.github.io/lung-tumor-detection/presentation/)** (use the arrow keys or click to move, F for full screen)
+
 ## Overview
 
 CT shows anatomy (shape and edges) and PET shows metabolic activity, but neither scan alone gives the full picture. This project trains one YOLO detector three times — on CT only, PET only, and fused PET/CT — under identical conditions, and compares how well each finds and localizes lung tumors.
