@@ -1,0 +1,22 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.ipynb_checkpoints/
+
+# Data and model artifacts (download from TCIA/IDC; don't commit)
+data/
+dicom/
+ann/
+yolo_data/
+runs/
+*.dcm
+*.zip
+*.pt
+*.pth
+*.onnx
+
+# OS / editor
+.DS_Store
+.vscode/
