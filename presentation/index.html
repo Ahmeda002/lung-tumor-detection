@@ -1,0 +1,584 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Deep Learning-Based Lung Tumor Detection Using CT, PET, and PET/CT Fusion</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;600&family=Space+Grotesk:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{--navy:#0F1B26;--ink:#46525E;--muted:#5C6873;--cream:#F5F3EE;--card:#FCFBF8;--line:#DDD8CE;--orange:#B4530A;--amber:#E8862A;--glow:#F2A65A;--blue:#2E6FB7;--sky:#7FB2E8;--green:#5FCB7A;
+--sans:'IBM Plex Sans',system-ui,-apple-system,'Segoe UI',Arial,sans-serif;--head:'Space Grotesk','IBM Plex Sans',system-ui,Arial,sans-serif}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;background:#0A131B;overflow:hidden;font-family:var(--sans)}
+#stage{position:absolute;left:50%;top:50%;width:1920px;height:1080px;transform-origin:center center}
+.slide{position:absolute;inset:0;padding:128px;background:var(--cream);color:var(--ink);display:flex;flex-direction:column;gap:40px;opacity:0;visibility:hidden;transform:translateX(0);transition:opacity .55s ease,transform .55s cubic-bezier(.2,.7,.2,1),visibility 0s .55s;overflow:hidden}
+.slide.active{opacity:1;visibility:visible;transition:opacity .55s ease,transform .55s cubic-bezier(.2,.7,.2,1),visibility 0s}
+.slide.push:not(.active){transform:translateX(120px)}
+.slide.push.leaving{transform:translateX(-120px)}
+.slide.dark{background:var(--navy);color:#E6EDF3}
+.slide.accent{background:var(--amber);color:var(--navy)}
+.between{justify-content:space-between}
+.eyebrow{font-size:24px;font-weight:600;letter-spacing:3px;text-transform:uppercase;color:var(--orange)}
+.dark .eyebrow{color:var(--glow)}.accent .eyebrow{color:var(--navy)}
+h1,h2,h3,.big,.num{font-family:var(--head);font-weight:500;color:var(--navy)}
+.dark h1,.dark h2,.dark h3{color:#F5F3EE}
+h1{font-size:64px;line-height:1.1}
+h2{font-size:64px;line-height:1.1}
+h3{font-size:30px;font-weight:600;line-height:1.2}
+.head{display:flex;flex-direction:column;gap:12px}
+p{font-size:24px;line-height:1.38}
+.lg{font-size:30px;line-height:1.4}
+.src{font-size:22px;color:var(--muted)}
+.row{display:flex;gap:32px;align-items:stretch}
+.row>*{flex:1}
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:32px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:32px 36px;display:flex;flex-direction:column;gap:12px}
+.card.dk{background:var(--navy);border-color:var(--navy);color:#C9D3DC}
+.card.dk h3{color:#F5F3EE}
+.card.ol{border:2px solid var(--navy)}
+.label{font-size:24px;font-weight:600;color:var(--blue)}
+.label.o{color:var(--orange)}.label.n{color:var(--navy)}
+.num{font-size:96px;line-height:1.05}
+.num.sm{font-size:80px}
+.blue{color:var(--blue)}.org{color:var(--orange)}
+.band{font-size:30px;line-height:1.4;color:#F5F3EE;background:var(--navy);padding:24px 40px;border-radius:16px}
+.scan{background:var(--navy);border-radius:12px;display:flex;justify-content:center;align-items:center;overflow:hidden}
+.pill{display:inline-block;font-size:24px;font-weight:600;padding:6px 16px;border-radius:8px}
+.abs{position:absolute}
+.rel{position:relative}
+#hud{position:fixed;left:0;right:0;bottom:0;height:5px;background:rgba(255,255,255,.08);z-index:5}
+#bar{height:100%;width:0;background:var(--amber);transition:width .4s ease}
+#count{position:fixed;right:18px;bottom:14px;font:600 13px var(--sans);color:rgba(255,255,255,.55);z-index:5;letter-spacing:1px}
+#help{position:fixed;left:18px;bottom:14px;font:13px var(--sans);color:rgba(255,255,255,.45);z-index:5;transition:opacity 1s}
+.pg{position:absolute;right:64px;bottom:44px;font-size:22px;color:#A9A397}
+.dark .pg,.accent .pg{color:rgba(230,237,243,.45)}
+/* animation system */
+.a{opacity:0}
+.active .a{animation:var(--k,rise) var(--t,.75s) cubic-bezier(.2,.7,.2,1) both;animation-delay:calc(var(--d,0) * 120ms + 200ms)}
+@keyframes rise{from{opacity:0;transform:translateY(32px)}to{opacity:1;transform:none}}
+@keyframes fade{from{opacity:0}to{opacity:1}}
+@keyframes pop{0%{opacity:0;transform:scale(.6)}70%{opacity:1;transform:scale(1.06)}100%{opacity:1;transform:scale(1)}}
+@keyframes left{from{opacity:0;transform:translateX(-48px)}to{opacity:1;transform:none}}
+@keyframes right{from{opacity:0;transform:translateX(48px)}to{opacity:1;transform:none}}
+@keyframes drop{from{opacity:0;transform:translateY(-40px)}to{opacity:1;transform:none}}
+@keyframes growx{from{opacity:1;transform:scaleX(0)}to{opacity:1;transform:scaleX(1)}}
+@keyframes zoom{from{opacity:0;transform:scale(.88)}to{opacity:1;transform:none}}
+@keyframes fromphoto{from{opacity:0;transform:translateX(-420px) scale(.9)}to{opacity:1;transform:none}}
+@keyframes settle{from{opacity:0;transform:translate(90px,90px)}to{opacity:1;transform:none}}
+@keyframes shift{0%{opacity:0;transform:none}30%{opacity:1;transform:none}100%{opacity:1;transform:translate(24px,18px)}}
+svg .a:not(.growx){transform-box:fill-box;transform-origin:center}
+.growx{transform-origin:left center}
+.draw{stroke-dasharray:1;stroke-dashoffset:1}
+.active .draw{animation:draw var(--t,1s) ease-out both;animation-delay:calc(var(--d,0) * 120ms + 200ms)}
+@keyframes draw{to{stroke-dashoffset:0}}
+.pulse{transform-box:fill-box;transform-origin:center}
+.active .pulse{animation:pulse 3.2s ease-in-out 1.6s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.72}}
+@media (prefers-reduced-motion:reduce){.a,.draw{animation:none!important;opacity:1!important;stroke-dashoffset:0!important}.active .pulse{animation:none}.slide{transition:none}}
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+<defs>
+<radialGradient id="hot" cx="50%" cy="50%" r="50%"><stop offset="0%" stop-color="#FFE3A8"/><stop offset="40%" stop-color="#F2A65A"/><stop offset="100%" stop-color="#E8862A" stop-opacity="0"/></radialGradient>
+<radialGradient id="dim" cx="50%" cy="50%" r="50%"><stop offset="0%" stop-color="#F2A65A" stop-opacity=".72"/><stop offset="100%" stop-color="#E8862A" stop-opacity="0"/></radialGradient>
+<radialGradient id="mix" cx="50%" cy="50%" r="50%"><stop offset="0%" stop-color="#FFE3A8" stop-opacity=".95"/><stop offset="45%" stop-color="#F2A65A" stop-opacity=".8"/><stop offset="100%" stop-color="#E8862A" stop-opacity="0"/></radialGradient>
+<path id="lungL" d="M340,170 C280,150 190,200 165,290 C145,370 190,440 270,435 C330,430 358,380 355,310 C353,250 360,190 340,170 Z"/>
+<symbol id="ct" viewBox="90 90 620 420"><ellipse cx="400" cy="300" rx="300" ry="200" fill="#5E6E7D"/><use href="#lungL" fill="#070C11"/><use href="#lungL" fill="#070C11" transform="translate(800,0) scale(-1,1)"/><ellipse cx="400" cy="325" rx="34" ry="62" fill="#7C8B99"/><circle cx="400" cy="455" r="22" fill="#E6EDF3"/><circle cx="545" cy="300" r="18" fill="#AEBBC7"/></symbol>
+<symbol id="lungwin" viewBox="90 90 620 420"><ellipse cx="400" cy="300" rx="300" ry="200" fill="#C9D3DC"/><use href="#lungL" fill="#2E3B48"/><use href="#lungL" fill="#2E3B48" transform="translate(800,0) scale(-1,1)"/><circle cx="545" cy="300" r="20" fill="#DCE4EB"/></symbol>
+<symbol id="medwin" viewBox="90 90 620 420"><ellipse cx="400" cy="300" rx="300" ry="200" fill="#5E6E7D"/><use href="#lungL" fill="#05090C"/><use href="#lungL" fill="#05090C" transform="translate(800,0) scale(-1,1)"/><ellipse cx="400" cy="325" rx="34" ry="62" fill="#8493A1"/><circle cx="400" cy="455" r="22" fill="#E6EDF3"/><circle cx="545" cy="300" r="20" fill="#7C8B99"/></symbol>
+<symbol id="pet" viewBox="90 90 620 420"><ellipse cx="400" cy="300" rx="300" ry="200" fill="#14222F" stroke="#2C4660" stroke-width="4"/><use href="#lungL" fill="#101B25" stroke="#2C4660" stroke-width="3"/><use href="#lungL" fill="#101B25" stroke="#2C4660" stroke-width="3" transform="translate(800,0) scale(-1,1)"/><ellipse cx="400" cy="325" rx="60" ry="80" fill="url(#dim)"/><circle cx="545" cy="300" r="70" fill="url(#hot)"/></symbol>
+<symbol id="fused" viewBox="90 90 620 420"><ellipse cx="400" cy="300" rx="300" ry="200" fill="#5E6E7D"/><use href="#lungL" fill="#070C11"/><use href="#lungL" fill="#070C11" transform="translate(800,0) scale(-1,1)"/><ellipse cx="400" cy="325" rx="34" ry="62" fill="#7C8B99"/><ellipse cx="400" cy="325" rx="56" ry="76" fill="url(#dim)"/><circle cx="400" cy="455" r="22" fill="#E6EDF3"/><circle cx="545" cy="300" r="64" fill="url(#mix)"/><circle cx="545" cy="300" r="16" fill="#DCE4EB"/></symbol>
+<symbol id="healthy" viewBox="90 90 620 420"><ellipse cx="400" cy="300" rx="300" ry="200" fill="#5E6E7D"/><use href="#lungL" fill="#070C11"/><use href="#lungL" fill="#070C11" transform="translate(800,0) scale(-1,1)"/><ellipse cx="400" cy="325" rx="34" ry="62" fill="#7C8B99"/><ellipse cx="400" cy="325" rx="60" ry="80" fill="url(#dim)"/><circle cx="400" cy="455" r="22" fill="#E6EDF3"/></symbol>
+</defs>
+</svg>
+
+<div id="stage">
+
+<!-- 1 COVER -->
+<section class="slide dark between" data-title="Cover">
+  <svg class="abs a" style="--k:zoom;--t:1.1s;left:1060px;top:240px" width="740" height="500" viewBox="0 0 740 500" aria-label="Drawing of a chest scan slice with a glowing tumor in one lung and a detection box around it">
+    <rect x="0" y="0" width="740" height="500" rx="24" fill="#182A3A"/>
+    <use href="#fused" x="20" y="20" width="700" height="460"/>
+    <rect class="draw" pathLength="1" x="469" y="190" width="120" height="120" fill="none" stroke="#F2A65A" stroke-width="5" style="--d:6;--t:.9s"/>
+  </svg>
+  <p class="abs a pill" style="--k:pop;--d:9;left:1520px;top:374px;background:var(--glow);color:var(--navy)">Tumor found</p>
+  <div class="head" style="width:880px;gap:28px">
+    <p class="eyebrow a" style="--d:0">COMP 4500 · Senior Project</p>
+    <h1 class="a" style="--d:1">Deep Learning-Based Lung Tumor Detection Using CT, PET, and Multi Modal PET/CT Fusion</h1>
+    <p class="lg a" style="--d:2;color:#9FB0BF;font-size:32px">One YOLO detector, three inputs, one fair comparison</p>
+  </div>
+  <p class="a" style="--d:4;color:#9FB0BF;width:900px;line-height:1.5">Ahmed Abdikadir and Julian Padron · Advisor Dr. Ali Sekmen<br>Department of Computer Science · College of Engineering<br>Tennessee State University</p>
+</section>
+
+<!-- 2 OUTLINE -->
+<section class="slide" data-title="Outline">
+  <div class="head"><p class="eyebrow a">Outline</p><h2 class="a" style="--d:1">What we will cover</h2></div>
+  <div class="grid3">
+    <div class="card a" style="--d:2"><p class="num blue" style="font-size:64px">1</p><h3 style="font-size:40px;font-weight:500">Introduction</h3><p>The problem, and what CT and PET each show</p></div>
+    <div class="card a" style="--d:3"><p class="num blue" style="font-size:64px">2</p><h3 style="font-size:40px;font-weight:500">Goal and hypothesis</h3><p>What we aim for and what we expect</p></div>
+    <div class="card a" style="--d:4"><p class="num blue" style="font-size:64px">3</p><h3 style="font-size:40px;font-weight:500">Objectives</h3><p>Six objectives and the key requirements</p></div>
+    <div class="card a" style="--d:5"><p class="num blue" style="font-size:64px">4</p><h3 style="font-size:40px;font-weight:500">Design</h3><p>Architecture, data and the three channels</p></div>
+    <div class="card a" style="--d:6"><p class="num blue" style="font-size:64px">5</p><h3 style="font-size:40px;font-weight:500">Training and testing</h3><p>Experiments, scoring, robustness and the app</p></div>
+    <div class="card a" style="--d:7"><p class="num blue" style="font-size:64px">6</p><h3 style="font-size:40px;font-weight:500">Status</h3><p>Our prototype and the timeline ahead</p></div>
+  </div>
+</section>
+
+<!-- 3 PROBLEM -->
+<section class="slide between" data-title="Problem">
+  <div class="head"><p class="eyebrow a">Introduction · Problem statement</p><h2 class="a" style="--d:1">Too many scans, each one incomplete</h2></div>
+  <div class="row" style="gap:24px">
+    <div class="card a" style="--d:2;padding:32px"><p class="num sm blue" data-count="93" data-suffix="M">93M</p><h3>CT exams a year</h3><p>In the U.S. in 2023, on top of MRI, X-ray and PET.</p><p class="src">Smith-Bindman et al., JAMA Intern. Med., 2025</p></div>
+    <div class="card a" style="--d:3;padding:32px"><p class="num sm blue" data-count="49.4" data-dec="1">49.4</p><h3>exams in one night shift</h3><p>For one emergency radiologist, so findings can slip through.</p><p class="src">Nitrosi et al., J. Digital Imaging, 2023</p></div>
+    <div class="card a" style="--d:4;padding:32px"><p class="num sm blue">AI</p><h3>a second opinion</h3><p>It never gets tired, but it has its own limits and errors.</p></div>
+    <div class="card a" style="--d:5;padding:32px"><p class="num sm org" data-count="2">2</p><h3>scans for cancer</h3><p>CT shows shape, PET shows activity. Neither alone gives the full picture.</p></div>
+  </div>
+  <p class="band a" style="--d:7">We run the same detector three times, on CT, on PET and on the fused version, and compare how well each one finds and locates tumors.</p>
+</section>
+
+<!-- 4 SCANS -->
+<section class="slide" data-title="CT vs PET">
+  <div class="head"><p class="eyebrow a">Introduction</p><h2 class="a" style="--d:1">CT shows shape and PET shows activity</h2></div>
+  <div class="row" style="gap:64px">
+    <div style="display:flex;flex-direction:column;gap:24px">
+      <div class="rel a" style="--k:left;--d:2;height:540px;background:var(--navy);border-radius:20px;overflow:hidden">
+        <svg class="abs" style="left:0;top:0" width="800" height="540" viewBox="0 0 800 540" aria-label="CT slice: lungs black, bone bright, tumor a small gray spot with a clear edge">
+          <use href="#ct" x="40" y="60" width="560" height="380"/>
+          <circle class="draw" pathLength="1" cx="478" cy="250" r="22" fill="none" stroke="#7FB2E8" stroke-width="3" style="--d:5"/>
+          <path class="draw" pathLength="1" d="M498,240 L548,186" stroke="#7FB2E8" stroke-width="3" fill="none" style="--d:6"/>
+          <circle class="a" cx="216" cy="250" r="6" fill="#7FB2E8" style="--k:fade;--d:7"/>
+          <path class="draw" pathLength="1" d="M216,250 L548,378" stroke="#7FB2E8" stroke-width="3" fill="none" style="--d:7"/>
+        </svg>
+        <p class="abs pill" style="left:32px;top:28px;background:var(--sky);color:var(--navy)">CT</p>
+        <p class="abs" style="left:112px;top:34px;width:340px;color:#E6EDF3">X-ray based, shows structure</p>
+        <p class="abs a" style="--k:fade;--d:7;left:560px;top:146px;width:216px;color:#E6EDF3;line-height:1.3">Tumor is a gray spot with a clear edge</p>
+        <p class="abs a" style="--k:fade;--d:8;left:560px;top:344px;width:216px;color:#E6EDF3;line-height:1.3">Lung is black because it is full of air</p>
+      </div>
+      <p class="lg a" style="--d:9;color:var(--navy)">Tells us where things are. Says nothing about whether the tissue is active.</p>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:24px">
+      <div class="rel a" style="--k:right;--d:3;height:540px;background:var(--navy);border-radius:20px;overflow:hidden">
+        <svg class="abs" style="left:0;top:0" width="800" height="540" viewBox="0 0 800 540" aria-label="PET slice: anatomy faint, tumor glowing brightly, heart glowing dimly">
+          <g class="pulse"><use href="#pet" x="40" y="60" width="560" height="380"/></g>
+          <circle class="draw" pathLength="1" cx="478" cy="250" r="34" fill="none" stroke="#F2A65A" stroke-width="3" style="--d:6"/>
+          <path class="draw" pathLength="1" d="M506,234 L548,186" stroke="#F2A65A" stroke-width="3" fill="none" style="--d:7"/>
+          <circle class="a" cx="347" cy="272" r="6" fill="#F2A65A" style="--k:fade;--d:8"/>
+          <path class="draw" pathLength="1" d="M347,272 L548,398" stroke="#F2A65A" stroke-width="3" fill="none" style="--d:8"/>
+        </svg>
+        <p class="abs pill" style="left:32px;top:28px;background:var(--glow);color:var(--navy)">PET</p>
+        <p class="abs" style="left:124px;top:34px;width:360px;color:#E6EDF3">Sugar tracer, shows activity</p>
+        <p class="abs a" style="--k:fade;--d:8;left:560px;top:146px;width:216px;color:#E6EDF3;line-height:1.3">Bright spot where cells burn sugar fast</p>
+        <p class="abs a" style="--k:fade;--d:9;left:560px;top:356px;width:216px;color:#E6EDF3;line-height:1.3">The heart glows too. Healthy tissue also uses sugar.</p>
+      </div>
+      <p class="lg a" style="--d:10;color:var(--navy)">Tells us what is active. Blurry about exactly where, and not every glow is cancer.</p>
+    </div>
+  </div>
+</section>
+
+<!-- 5 GOAL -->
+<section class="slide accent between push" data-title="Research goal">
+  <p class="eyebrow a">Research goal</p>
+  <h2 class="a" style="--d:1;font-size:96px;line-height:1.05;--t:1s">Develop an AI model that combines CT anatomy with PET activity to localize lung tumors better than either scan alone</h2>
+  <p class="lg a" style="--d:4;color:var(--navy);width:1200px;font-size:32px">Measured against a CT only model and a PET only model under the same conditions.</p>
+</section>
+
+<!-- 6 HYPOTHESIS -->
+<section class="slide between" data-title="Hypothesis">
+  <div class="head"><p class="eyebrow a">Hypothesis</p><h2 class="a" style="--d:1">What we expect to find</h2></div>
+  <div class="row">
+    <div class="card a" style="--d:2;padding:40px"><p class="label">Expectation 1</p><h3 style="font-size:36px;font-weight:500">Fusion beats both</h3><p class="lg">CT gives the edges, PET gives the glow. Together: fewer missed tumors and fewer false alarms.</p></div>
+    <div class="card a" style="--d:3;padding:40px"><p class="label">Expectation 2</p><h3 style="font-size:36px;font-weight:500">Biggest gains on hard cases</h3><p class="lg">Small tumors, and tumors against the chest wall that blend in on CT.</p></div>
+    <div class="card a" style="--d:4;padding:40px"><p class="label o">Expectation 3</p><h3 style="font-size:36px;font-weight:500">PET alone finds but misplaces</h3><p class="lg">Good at spotting tumors, but looser boxes and false alarms from normal glow like the heart.</p></div>
+  </div>
+  <p class="band a" style="--d:6">If fusion doesn’t win, that is still a result. The comparison is fair, so it tells us which input to trust.</p>
+</section>
+
+<!-- 7 OBJECTIVES -->
+<section class="slide" data-title="Objectives">
+  <div class="head"><p class="eyebrow a">Associated objectives</p><h2 class="a" style="--d:1">Six objectives</h2></div>
+  <div class="grid3">
+    <div class="card a" style="--d:2;gap:10px"><p class="num blue" style="font-size:40px">1</p><h3>Acquire and preprocess</h3><p>A paired lung PET/CT dataset with expert reviewed tumor annotations.</p></div>
+    <div class="card a" style="--d:3;gap:10px"><p class="num blue" style="font-size:40px">2</p><h3>Organize and align</h3><p>CT, PET and fused images, each kept with its patient and its tumor annotation.</p></div>
+    <div class="card a" style="--d:4;gap:10px"><p class="num blue" style="font-size:40px">3</p><h3>Train comparable models</h3><p>CT, PET and fused PET/CT detectors on one established YOLO architecture.</p></div>
+    <div class="card a" style="--d:5;gap:10px"><p class="num blue" style="font-size:40px">4</p><h3>Evaluate localization</h3><p>mAP, IoU, precision, recall, false positives and missed tumors.</p></div>
+    <div class="card a" style="--d:6;gap:10px"><p class="num blue" style="font-size:40px">5</p><h3>Compare by size and case</h3><p>Across tumor sizes, and case by case where CT, PET or fusion succeeds or fails.</p></div>
+    <div class="card a" style="--d:7;gap:10px"><p class="num blue" style="font-size:40px">6</p><h3>Build a reproducible app</h3><p>Patient level visualization, model comparison and robustness testing.</p></div>
+  </div>
+</section>
+
+<!-- 8 FUNCTIONAL -->
+<section class="slide between" data-title="Requirements">
+  <div class="head"><p class="eyebrow a">Functional requirements</p><h2 class="a" style="--d:1">The three that matter most</h2></div>
+  <div class="row">
+    <div class="card a" style="--d:2;padding:40px;gap:16px"><p class="label">Requirement 6</p><h3 style="font-size:40px;font-weight:500">Train the fusion model</h3><p class="lg">A multimodal PET/CT fusion model will be trained with the same detector and settings as the CT only and PET only models.</p></div>
+    <div class="card a" style="--d:3;padding:40px;gap:16px"><p class="label">Requirement 8</p><h3 style="font-size:40px;font-weight:500">Measure all three</h3><p class="lg">Tumor localization performance will be measured for all three models on the held out test set.</p></div>
+    <div class="card a" style="--d:4;padding:40px;gap:16px"><p class="label">Requirement 12</p><h3 style="font-size:40px;font-weight:500">Deliver the app</h3><p class="lg">A reproducible application will present patient level visualization, model comparison and robustness results.</p></div>
+  </div>
+  <p class="a" style="--d:6">The report lists twelve. The other nine cover the data checks, image and label conversion, the patient split, the CT and PET baselines, augmentation, size analysis, case visualizations and robustness tests.</p>
+</section>
+
+<!-- 9 PIPELINE -->
+<section class="slide push" data-title="System architecture">
+  <div class="head"><p class="eyebrow a">System architecture</p><h2 class="a" style="--d:1">Five subsystems, raw scans to results</h2></div>
+  <div style="display:flex;gap:12px;align-items:stretch">
+    <div class="card a" style="--d:2;flex:1;padding:24px;gap:12px"><p class="label">R1</p><h3>Data Organization</h3><p>Keeps the 133 paired PET/CT patients and checks their expert boxes.</p></div>
+    <svg width="44" height="40" viewBox="0 0 44 40" style="align-self:center;flex:none"><path class="draw" pathLength="1" d="M2,20 L34,20 M24,8 L38,20 L24,32" fill="none" stroke="#5C6873" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" style="--d:3"/></svg>
+    <div class="card a" style="--d:4;flex:1;padding:24px;gap:12px"><p class="label">R2, R3</p><h3>Image and Label Conversion</h3><p>Two CT windows, PET in SUV, YOLO labels, split by patient.</p></div>
+    <svg width="44" height="40" viewBox="0 0 44 40" style="align-self:center;flex:none"><path class="draw" pathLength="1" d="M2,20 L34,20 M24,8 L38,20 L24,32" fill="none" stroke="#5C6873" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" style="--d:5"/></svg>
+    <div class="card a" style="--d:6;flex:1;padding:24px;gap:12px"><p class="label o">R4 to R7</p><h3>Model Training</h3><p>YOLO11s from COCO weights. Three runs, one recipe.</p></div>
+    <svg width="44" height="40" viewBox="0 0 44 40" style="align-self:center;flex:none"><path class="draw" pathLength="1" d="M2,20 L34,20 M24,8 L38,20 L24,32" fill="none" stroke="#5C6873" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" style="--d:7"/></svg>
+    <div class="card a" style="--d:8;flex:1;padding:24px;gap:12px"><p class="label">R8, R9, R11</p><h3>Evaluation and Robustness</h3><p>IoU, precision, recall, mAP, size groups and stress tests.</p></div>
+    <svg width="44" height="40" viewBox="0 0 44 40" style="align-self:center;flex:none"><path class="draw" pathLength="1" d="M2,20 L34,20 M24,8 L38,20 L24,32" fill="none" stroke="#5C6873" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" style="--d:9"/></svg>
+    <div class="card a" style="--d:10;flex:1;padding:24px;gap:12px"><p class="label">R10, R12</p><h3>Patient Viewer Application</h3><p>Streamlit app for slices, boxes and saved results.</p></div>
+  </div>
+  <div class="row">
+    <div class="card dk a" style="--d:12"><h3>Three data stores</h3><p>Organized data, YOLO image sets and trained models sit between the subsystems.</p></div>
+    <div class="card dk a" style="--d:13"><h3>Three outside sources</h3><p>TCIA for the scans, Ultralytics for pretrained weights, and the reviewer using the viewer.</p></div>
+    <div class="card dk a" style="--d:14"><h3>Shared training recipe</h3><p>Up to 100 epochs, early stopping after 20. AdamW at 0.001, batch 16, seed 0.</p></div>
+  </div>
+</section>
+
+<!-- 10 DATASET -->
+<section class="slide between" data-title="Dataset">
+  <div class="head"><p class="eyebrow a">Detailed design · Data</p><h2 class="a" style="--d:1">Lung-PET-CT-Dx, a public dataset</h2></div>
+  <div class="row">
+    <div class="card a" style="--d:2;gap:8px"><p class="num" data-count="355">355</p><p>patients in the full collection</p></div>
+    <div class="card a" style="--d:3;gap:8px"><p class="num org" data-count="133">133</p><p>have a paired PET/CT study. These are the ones we use.</p></div>
+    <div class="card a" style="--d:4;gap:8px"><p class="num" data-count="31.7" data-dec="1" data-suffix="K">31.7K</p><p>tumor boxes in the annotation files, reviewed by five radiologists</p></div>
+    <div class="card a" style="--d:5;gap:8px"><p class="num" data-count="4">4</p><p>cancer subtypes in the data. The detector has one class, tumor.</p></div>
+  </div>
+  <div style="display:flex;flex-direction:column;gap:16px">
+    <p class="a" style="--d:6;font-size:30px;font-weight:600;color:var(--navy)">How we split it</p>
+    <div style="display:flex;gap:8px">
+      <p class="a growx" style="--k:growx;--d:7;flex:75;font-weight:600;color:#F5F3EE;background:var(--navy);padding:20px 24px;border-radius:10px">Train 75%</p>
+      <p class="a growx" style="--k:growx;--d:9;flex:10;font-weight:600;color:#FCFBF8;background:var(--blue);padding:20px 16px;border-radius:10px;white-space:nowrap">Val 10%</p>
+      <p class="a growx" style="--k:growx;--d:10;flex:15;font-weight:600;color:var(--navy);background:var(--amber);padding:20px 24px;border-radius:10px;white-space:nowrap">Test 15%</p>
+    </div>
+    <p class="a" style="--d:11">About 100, 13 and 20 patients. Split by patient and stratified by tumor distribution, so no slice leaks between sets.</p>
+  </div>
+  <p class="src a" style="--d:12">Source: Li et al., Lung-PET-CT-Dx, The Cancer Imaging Archive, 2020</p>
+</section>
+
+<!-- 11 PHOTO LAYERS -->
+<section class="slide" data-title="A photo is three layers">
+  <div class="head"><p class="eyebrow a">Detailed design · Fusion</p><h2 class="a" style="--d:1">A photo is three layers stacked together</h2></div>
+  <div class="rel" style="height:420px">
+    <svg class="abs" style="left:0;top:0" width="1664" height="420" viewBox="0 0 1664 420" aria-label="A color photo of sky, sun and grass splitting into its red, green and blue grayscale layers">
+      <g class="a" style="--k:zoom;--d:2"><rect x="0" y="0" width="380" height="271" rx="16" fill="#5DA9E9"/><path d="M0,176 L380,176 L380,255 Q380,271 364,271 L16,271 Q0,271 0,255 Z" fill="#4E9A3A"/><circle cx="293" cy="76" r="38" fill="#F5C542"/></g>
+      <path class="draw" pathLength="1" d="M400,135 L452,135" stroke="#0F1B26" stroke-width="8" fill="none" style="--d:4"/>
+      <path class="a" style="--k:fade;--d:5" d="M446,111 L484,135 L446,159 Z" fill="#0F1B26"/>
+      <g class="a" style="--k:fromphoto;--d:6;--t:.9s"><rect x="506" y="0" width="370" height="264" rx="16" fill="#5D5D5D"/><path d="M506,172 L876,172 L876,248 Q876,264 860,264 L522,264 Q506,264 506,248 Z" fill="#4E4E4E"/><circle cx="791" cy="74" r="37" fill="#F5F5F5"/></g>
+      <g class="a" style="--k:fromphoto;--d:8;--t:.9s"><rect x="900" y="0" width="370" height="264" rx="16" fill="#A9A9A9"/><path d="M900,172 L1270,172 L1270,248 Q1270,264 1254,264 L916,264 Q900,264 900,248 Z" fill="#9A9A9A"/><circle cx="1185" cy="74" r="37" fill="#C5C5C5"/></g>
+      <g class="a" style="--k:fromphoto;--d:10;--t:.9s"><rect x="1294" y="0" width="370" height="264" rx="16" fill="#E9E9E9"/><path d="M1294,172 L1664,172 L1664,248 Q1664,264 1648,264 L1310,264 Q1294,264 1294,248 Z" fill="#3A3A3A"/><circle cx="1579" cy="74" r="37" fill="#424242"/></g>
+    </svg>
+    <p class="abs a" style="--d:3;left:0;top:290px;width:380px;font-size:30px;font-weight:600;color:var(--navy)">A normal color photo</p>
+    <p class="abs a" style="--d:3;left:0;top:334px;width:380px;color:var(--muted)">Detectors like YOLO are trained on millions of these</p>
+    <p class="abs a" style="--d:8;left:506px;top:284px;width:370px;font-weight:600;color:var(--blue)">Red layer becomes</p>
+    <p class="abs a" style="--d:8;left:506px;top:318px;width:370px;font-family:var(--head);font-size:30px;font-weight:600;color:var(--navy)">CT lung window</p>
+    <p class="abs a" style="--d:10;left:900px;top:284px;width:370px;font-weight:600;color:var(--blue)">Green layer becomes</p>
+    <p class="abs a" style="--d:10;left:900px;top:318px;width:370px;font-family:var(--head);font-size:30px;font-weight:600;color:var(--navy)">CT mediastinal window</p>
+    <p class="abs a" style="--d:12;left:1294px;top:284px;width:370px;font-weight:600;color:var(--orange)">Blue layer becomes</p>
+    <p class="abs a" style="--d:12;left:1294px;top:318px;width:370px;font-family:var(--head);font-size:30px;font-weight:600;color:var(--navy)">PET activity</p>
+  </div>
+  <div class="row">
+    <div class="card a" style="--d:14;padding:24px 32px;gap:6px"><h3>Three views, one picture</h3><p>Sun, grass and sky each stand out in a different layer.</p></div>
+    <div class="card a" style="--d:15;padding:24px 32px;gap:6px"><h3>Detectors expect three</h3><p>YOLO learned from millions of photos with these three layers.</p></div>
+    <div class="card dk a" style="--d:16;padding:24px 32px;gap:6px"><h3>We swap colors for scans</h3><p>Same three slots, filled with two CT views and one PET.</p></div>
+  </div>
+</section>
+
+<!-- 12 WHY THREE CHANNELS -->
+<section class="slide" data-title="Why three channels">
+  <div class="head"><p class="eyebrow a">Detailed design · Fusion</p><h2 class="a" style="--d:1">Why we feed the model three channels</h2></div>
+  <div class="rel" style="height:460px">
+    <svg class="abs" style="left:0;top:0" width="1664" height="460" viewBox="0 0 1664 460" aria-label="Three drawn scan tiles, CT lung window, CT mediastinal window and PET, stack into one combined image">
+      <g class="a" style="--k:left;--d:2"><rect x="2" y="4" width="262" height="176" rx="12" fill="#0F1B26" stroke="#F5F3EE" stroke-width="3"/><use href="#lungwin" x="12" y="10" width="242" height="164"/></g>
+      <g class="a" style="--k:left;--d:5"><rect x="70" y="142" width="262" height="176" rx="12" fill="#0F1B26" stroke="#F5F3EE" stroke-width="3"/><use href="#medwin" x="80" y="148" width="242" height="164"/></g>
+      <g class="a" style="--k:left;--d:8"><rect x="140" y="280" width="262" height="176" rx="12" fill="#0F1B26" stroke="#F5F3EE" stroke-width="3"/><use href="#pet" x="150" y="286" width="242" height="164"/></g>
+      <path class="draw" pathLength="1" d="M264,61 L434,61" stroke="#5C6873" stroke-width="2" fill="none" style="--d:3"/>
+      <path class="draw" pathLength="1" d="M332,207 L434,207" stroke="#5C6873" stroke-width="2" fill="none" style="--d:6"/>
+      <path class="draw" pathLength="1" d="M402,353 L434,353" stroke="#5C6873" stroke-width="2" fill="none" style="--d:9"/>
+      <path class="draw" pathLength="1" d="M1010,227 L1106,227" stroke="#0F1B26" stroke-width="8" fill="none" style="--d:11"/>
+      <path class="a" style="--k:fade;--d:12" d="M1100,203 L1138,227 L1100,251 Z" fill="#0F1B26"/>
+      <g class="a" style="--k:zoom;--d:13"><rect x="1170" y="70" width="417" height="314" rx="16" fill="#0F1B26"/><use href="#fused" x="1180" y="80" width="397" height="294"/></g>
+    </svg>
+    <p class="abs a" style="--d:3;left:454px;top:5px;width:520px;font-weight:600;color:var(--blue)">A photo’s red layer becomes</p>
+    <p class="abs a" style="--d:3;left:454px;top:39px;width:520px;font-size:30px;font-weight:600;color:var(--navy)">CT lung window</p>
+    <p class="abs a" style="--d:3;left:454px;top:83px;width:520px;color:var(--muted)">Air goes black, so nodules stand out</p>
+    <p class="abs a" style="--d:6;left:454px;top:151px;width:520px;font-weight:600;color:var(--blue)">The green layer becomes</p>
+    <p class="abs a" style="--d:6;left:454px;top:185px;width:520px;font-size:30px;font-weight:600;color:var(--navy)">CT mediastinal window</p>
+    <p class="abs a" style="--d:6;left:454px;top:229px;width:520px;color:var(--muted)">Heart, vessels and chest wall</p>
+    <p class="abs a" style="--d:9;left:454px;top:297px;width:520px;font-weight:600;color:var(--orange)">The blue layer becomes</p>
+    <p class="abs a" style="--d:9;left:454px;top:331px;width:520px;font-size:30px;font-weight:600;color:var(--navy)">PET activity</p>
+    <p class="abs a" style="--d:9;left:454px;top:375px;width:520px;color:var(--muted)">Where cells burn sugar fast</p>
+    <p class="abs a" style="--d:13;left:1170px;top:20px;width:494px;font-size:30px;font-weight:600;color:var(--navy)">Looks like one normal photo</p>
+    <p class="abs a" style="--d:14;left:1170px;top:398px;width:494px;color:var(--muted)">So a detector trained on photos can read it</p>
+  </div>
+  <div class="row">
+    <div class="card a" style="--d:15;padding:24px 32px;gap:6px"><h3>One window isn’t enough</h3><p>CT spans about 2,000 HU, but an image holds 256 grays.</p></div>
+    <div class="card a" style="--d:16;padding:24px 32px;gap:6px"><h3>PET adds activity</h3><p>The tumor glows even where it blends in on CT.</p></div>
+    <div class="card dk a" style="--d:17;padding:24px 32px;gap:6px"><h3>Reuse a trained detector</h3><p>No new layers, unlike two-branch models like CMYOLOv5.</p></div>
+  </div>
+</section>
+
+<!-- 13 REAL PATIENT -->
+<section class="slide" data-title="Real patient">
+  <div class="head"><p class="eyebrow a">Detailed design · Fusion</p><h2 class="a" style="--d:1">Stack three views into one image</h2></div>
+  <div class="rel" style="height:460px">
+    <svg class="abs" style="left:0;top:0" width="1664" height="460" viewBox="0 0 1664 460" aria-hidden="true">
+      <path class="draw" pathLength="1" d="M188,90 L440,90" stroke="#5C6873" stroke-width="2" fill="none" style="--d:3"/>
+      <path class="draw" pathLength="1" d="M278,230 L440,230" stroke="#5C6873" stroke-width="2" fill="none" style="--d:6"/>
+      <path class="draw" pathLength="1" d="M368,370 L440,370" stroke="#5C6873" stroke-width="2" fill="none" style="--d:9"/>
+      <path class="draw" pathLength="1" d="M970,224 L1046,224" stroke="#0F1B26" stroke-width="8" fill="none" style="--d:11"/>
+      <path class="a" style="--k:fade;--d:12" d="M1040,200 L1078,224 L1040,248 Z" fill="#0F1B26"/>
+    </svg>
+    <div class="abs scan tile a" data-panel="0" style="--d:2;left:0;top:0;width:180px;height:180px;border:4px solid var(--cream)"><svg width="172" height="172" viewBox="0 0 172 172"><use href="#lungwin" x="0" y="28" width="172" height="116"/><rect x="113" y="73" width="26" height="26" fill="none" stroke="#5FCB7A" stroke-width="2.5"/></svg></div>
+    <div class="abs scan tile a" data-panel="1" style="--d:5;left:90px;top:140px;width:180px;height:180px;border:4px solid var(--cream)"><svg width="172" height="172" viewBox="0 0 172 172"><use href="#medwin" x="0" y="28" width="172" height="116"/><rect x="113" y="73" width="26" height="26" fill="none" stroke="#5FCB7A" stroke-width="2.5"/></svg></div>
+    <div class="abs scan tile a" data-panel="2" style="--d:8;left:180px;top:280px;width:180px;height:180px;border:4px solid var(--cream)"><svg width="172" height="172" viewBox="0 0 172 172"><use href="#pet" x="0" y="28" width="172" height="116"/><rect x="113" y="73" width="26" height="26" fill="none" stroke="#5FCB7A" stroke-width="2.5"/></svg></div>
+    <p class="abs a" style="--d:3;left:460px;top:32px;width:480px;font-weight:600;color:var(--blue)">Channel 1</p>
+    <p class="abs a" style="--d:3;left:460px;top:66px;width:480px;font-size:30px;font-weight:600;color:var(--navy)">CT lung window</p>
+    <p class="abs a" style="--d:3;left:460px;top:112px;width:480px;color:var(--muted)">Air and nodules. W 1500, L −600</p>
+    <p class="abs a" style="--d:6;left:460px;top:172px;width:480px;font-weight:600;color:var(--blue)">Channel 2</p>
+    <p class="abs a" style="--d:6;left:460px;top:206px;width:480px;font-size:30px;font-weight:600;color:var(--navy)">CT mediastinal window</p>
+    <p class="abs a" style="--d:6;left:460px;top:252px;width:480px;color:var(--muted)">Soft tissue. W 350, L 40</p>
+    <p class="abs a" style="--d:9;left:460px;top:312px;width:480px;font-weight:600;color:var(--orange)">Channel 3</p>
+    <p class="abs a" style="--d:9;left:460px;top:346px;width:480px;font-size:30px;font-weight:600;color:var(--navy)">PET in SUV</p>
+    <p class="abs a" style="--d:9;left:460px;top:392px;width:480px;color:var(--muted)">On the CT grid, clipped at SUV 15</p>
+    <p class="abs a" style="--d:12;left:1110px;top:0;width:554px;font-size:30px;font-weight:600;color:var(--navy)">One image, three channels</p>
+    <div class="abs scan tile a" data-panel="3" style="--k:zoom;--d:13;left:1110px;top:46px;width:360px;height:360px;border-radius:16px"><svg width="360" height="360" viewBox="0 0 360 360"><use href="#fused" x="0" y="58" width="360" height="244"/><rect x="236" y="152" width="56" height="56" fill="none" stroke="#5FCB7A" stroke-width="4"/></svg></div>
+    <p class="abs a" style="--d:14;left:1110px;top:418px;width:554px;color:var(--muted)">Green: radiologist’s tumor box</p>
+  </div>
+  <div class="row">
+    <div class="card a" style="--d:15;padding:24px 32px;gap:6px"><h3>No model changes</h3><p>Shaped like an RGB photo, so YOLO11s takes it as is.</p></div>
+    <div class="card a" style="--d:16;padding:24px 32px;gap:6px"><h3>CT is 5× sharper</h3><p>CT pixels are 0.78 mm, PET 4.07 mm, so PET is resampled.</p></div>
+    <div class="card dk a" style="--d:17;padding:24px 32px;gap:6px"><h3>Pixels must line up</h3><p>We test PET shifted 2, 5 and 10 pixels off the CT.</p></div>
+  </div>
+</section>
+
+<!-- 14 TRAINING -->
+<section class="slide" data-title="Training data">
+  <div class="head"><p class="eyebrow a">Detailed design · Training data</p><h2 class="a" style="--d:1">The model learns from labeled examples</h2></div>
+  <div class="row">
+    <div class="card a" style="--d:2;padding:28px;gap:16px">
+      <div class="scan"><svg width="384" height="216" viewBox="0 0 384 216" aria-label="Fused slice with a glowing tumor and a green expert box"><use href="#fused" x="48" y="0" width="290" height="216"/><rect class="draw" pathLength="1" x="239" y="86" width="44" height="44" fill="none" stroke="#5FCB7A" stroke-width="3" style="--d:5"/></svg></div>
+      <p class="label">Positive example</p><h3>Tumor + expert box</h3><p>The radiologist’s box becomes the answer the model must learn to draw.</p></div>
+    <div class="card a" style="--d:3;padding:28px;gap:16px">
+      <div class="scan"><svg width="384" height="216" viewBox="0 0 384 216" aria-label="Fused slice with no tumor; only the heart glows faintly"><use href="#healthy" x="48" y="0" width="290" height="216"/></svg></div>
+      <p class="label o">Negative example</p><h3>Tumor-free, no box</h3><p>Healthy chest slices with empty labels, so a glow like the heart’s isn’t called a tumor.</p></div>
+    <div class="card a" style="--d:4;padding:28px;gap:16px">
+      <div class="scan"><svg width="384" height="216" viewBox="0 0 384 216" aria-label="The model's orange box moves toward the radiologist's green box"><use href="#fused" x="48" y="0" width="290" height="216"/><rect x="239" y="86" width="44" height="44" fill="none" stroke="#5FCB7A" stroke-width="3"/><rect class="a" style="--k:settle;--d:7;--t:1.4s" x="243" y="90" width="44" height="44" fill="none" stroke="#F2A65A" stroke-width="4"/><path class="draw" pathLength="1" d="M318,150 C352,130 354,80 320,62" stroke="#E6EDF3" stroke-width="3" fill="none" stroke-linecap="round" style="--d:9"/></svg></div>
+      <p class="label n">Learning loop</p><h3>Guess, compare, adjust</h3><p>Each miss nudges the weights. This repeats for up to 100 epochs.</p></div>
+  </div>
+  <p class="band a" style="--d:8">About 100 patients to learn from, 13 to tune, 20 held back for the final test.</p>
+</section>
+
+<!-- 15 RUNS -->
+<section class="slide" data-title="Experiments">
+  <div class="head"><p class="eyebrow a">Detailed design · Experiment</p><h2 class="a" style="--d:1">One detector, three inputs</h2></div>
+  <div class="row">
+    <div class="card a" style="--d:2;padding:28px;gap:16px"><div class="scan"><svg width="384" height="250" viewBox="0 0 384 250" aria-label="CT only input"><use href="#ct" x="12" y="10" width="360" height="230"/></svg></div><p class="label">Experiment 1</p><h3 style="font-size:40px;font-weight:500">CT only</h3><p>Channels are lung window, mediastinal window, lung window.</p></div>
+    <div class="card a" style="--d:4;padding:28px;gap:16px"><div class="scan"><svg width="384" height="250" viewBox="0 0 384 250" aria-label="PET only input"><use href="#pet" x="12" y="10" width="360" height="230"/></svg></div><p class="label o">Experiment 2</p><h3 style="font-size:40px;font-weight:500">PET only</h3><p>Channels are the PET SUV image repeated three times.</p></div>
+    <div class="card ol a" style="--d:6;padding:28px;gap:16px"><div class="scan"><svg width="384" height="250" viewBox="0 0 384 250" aria-label="Stacked CT and PET input"><use href="#fused" x="12" y="10" width="360" height="230"/></svg></div><p class="label n">Experiment 3</p><h3 style="font-size:40px;font-weight:500">PET/CT fusion</h3><p>Channels are lung window, mediastinal window, PET SUV.</p></div>
+  </div>
+  <p class="band a" style="--d:8">Same YOLO11s, same pretrained weights, same recipe, same patient split. Only the image content changes.</p>
+</section>
+
+<!-- 16 METRICS -->
+<section class="slide" data-title="Scoring">
+  <div class="head"><p class="eyebrow a">Detailed design · Evaluation</p><h2 class="a" style="--d:1">What counts as finding a tumor</h2></div>
+  <div style="display:flex;gap:64px">
+    <div style="display:flex;flex-direction:column;gap:20px;width:760px;flex:none">
+      <div class="rel a" style="--d:2;width:760px;height:520px;background:var(--card);border:1px solid var(--line);border-radius:16px">
+        <svg class="abs" style="left:0;top:0" width="760" height="520" viewBox="0 0 760 520" aria-label="Radiologist's dashed box and the model's orange box overlap around a tumor; the overlap is shaded">
+          <ellipse cx="250" cy="220" rx="158" ry="128" fill="#DDD8CE"/>
+          <rect class="a" style="--k:fade;--d:3" x="80" y="80" width="340" height="280" fill="none" stroke="#0F1B26" stroke-width="4" stroke-dasharray="14 10"/>
+          <rect class="a" style="--k:settle;--d:5;--t:1.2s" x="230" y="180" width="340" height="280" fill="none" stroke="#E8862A" stroke-width="6"/>
+          <rect class="a" style="--k:fade;--d:10" x="230" y="180" width="190" height="180" fill="#E8862A" fill-opacity=".35"/>
+        </svg>
+        <p class="abs a" style="--k:fade;--d:4;left:80px;top:36px;width:340px;font-weight:600;color:var(--navy)">Radiologist’s box</p>
+        <p class="abs a" style="--k:pop;--d:11;left:250px;top:254px;width:150px;font-weight:600;color:var(--navy);text-align:center">Overlap</p>
+        <p class="abs a" style="--k:fade;--d:8;left:230px;top:472px;width:340px;font-weight:600;color:var(--orange);text-align:right">Model’s box</p>
+      </div>
+      <p class="lg a" style="--d:12;color:var(--navy)"><b>IoU</b> is the overlap divided by the total area both boxes cover. At 0.5 or higher we call it a hit.</p>
+    </div>
+    <div style="flex:1;display:flex;flex-direction:column;gap:24px">
+      <div class="card a" style="--k:right;--d:4;padding:32px 40px;gap:10px"><h3 style="font-size:40px;font-weight:500">Precision</h3><p>Of the boxes the model drew, how many were real tumors. Low precision means false alarms.</p></div>
+      <div class="card a" style="--k:right;--d:6;padding:32px 40px;gap:10px"><h3 style="font-size:40px;font-weight:500">Recall</h3><p>Of the real tumors, how many the model found. Low recall means missed tumors.</p></div>
+      <div class="card a" style="--k:right;--d:8;padding:32px 40px;gap:10px"><h3 style="font-size:40px;font-weight:500">F1 and mAP</h3><p>F1 combines precision and recall. mAP at 50 uses the 0.5 overlap rule. mAP at 50 to 95 averages over stricter ones.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- 17 STRESS -->
+<section class="slide" data-title="Robustness">
+  <div class="head"><p class="eyebrow a">Detailed design · Robustness</p><h2 class="a" style="--d:1">Three ways real scans go wrong</h2></div>
+  <div class="row">
+    <div class="card a" style="--d:2;padding:28px;gap:16px">
+      <div class="scan"><svg width="384" height="216" viewBox="0 0 384 216" aria-label="A chest scan covered in random speckles of noise"><use href="#ct" x="48" y="0" width="290" height="216"/>
+        <g fill="#E6EDF3" fill-opacity=".8">
+          <circle class="a" style="--k:fade;--d:5" cx="70" cy="60" r="3"/><circle class="a" style="--k:fade;--d:6" cx="98" cy="132" r="2.5"/><circle class="a" style="--k:fade;--d:5" cx="120" cy="84" r="3"/><circle class="a" style="--k:fade;--d:7" cx="139" cy="160" r="2.5"/><circle class="a" style="--k:fade;--d:6" cx="158" cy="52" r="3"/><circle class="a" style="--k:fade;--d:8" cx="170" cy="118" r="2.5"/><circle class="a" style="--k:fade;--d:5" cx="190" cy="78" r="3"/><circle class="a" style="--k:fade;--d:7" cx="204" cy="150" r="3"/><circle class="a" style="--k:fade;--d:6" cx="222" cy="100" r="2.5"/><circle class="a" style="--k:fade;--d:8" cx="236" cy="58" r="3"/><circle class="a" style="--k:fade;--d:5" cx="250" cy="140" r="3"/><circle class="a" style="--k:fade;--d:7" cx="262" cy="92" r="2.5"/><circle class="a" style="--k:fade;--d:6" cx="280" cy="166" r="3"/><circle class="a" style="--k:fade;--d:8" cx="292" cy="70" r="3"/><circle class="a" style="--k:fade;--d:5" cx="306" cy="124" r="2.5"/><circle class="a" style="--k:fade;--d:7" cx="322" cy="96" r="3"/><circle class="a" style="--k:fade;--d:6" cx="86" cy="100" r="2.5"/><circle class="a" style="--k:fade;--d:8" cx="148" cy="112" r="3"/><circle class="a" style="--k:fade;--d:5" cx="214" cy="42" r="2.5"/><circle class="a" style="--k:fade;--d:7" cx="184" cy="176" r="3"/><circle class="a" style="--k:fade;--d:6" cx="330" cy="150" r="2.5"/><circle class="a" style="--k:fade;--d:8" cx="56" cy="128" r="3"/>
+        </g></svg></div>
+      <h3 style="font-size:40px;font-weight:500">Noise</h3><p>Gaussian and Poisson noise added to copies of the test images, for all three models.</p></div>
+    <div class="card a" style="--d:3;padding:28px;gap:16px">
+      <div class="scan"><svg width="384" height="216" viewBox="0 0 384 216" aria-label="Three channel tiles; the PET tile is empty and crossed out">
+        <rect x="36" y="38" width="92" height="140" rx="8" fill="#7FB2E8"/><rect x="146" y="38" width="92" height="140" rx="8" fill="#5E8FC4"/>
+        <rect x="256" y="38" width="92" height="140" rx="8" fill="#F2A65A" class="a" style="--k:fade;--d:3"/>
+        <rect x="256" y="38" width="92" height="140" rx="8" fill="#0F1B26" stroke="#F2A65A" stroke-width="4" stroke-dasharray="10 8" class="a" style="--k:fade;--d:7"/>
+        <path class="draw" pathLength="1" d="M272,62 L332,154 M332,62 L272,154" stroke="#F2A65A" stroke-width="5" stroke-linecap="round" fill="none" style="--d:9"/></svg></div>
+      <h3 style="font-size:40px;font-weight:500">Missing modality</h3><p>For the fusion model, the PET channel or the two CT channels are set to black.</p></div>
+    <div class="card a" style="--d:4;padding:28px;gap:16px">
+      <div class="scan"><svg width="384" height="216" viewBox="0 0 384 216" aria-label="The PET outline slides off the CT outline so the glow no longer sits on the tumor">
+        <ellipse cx="180" cy="100" rx="132" ry="78" fill="none" stroke="#7FB2E8" stroke-width="4"/><circle cx="236" cy="96" r="12" fill="#AEBBC7"/>
+        <g class="a" style="--k:shift;--d:6;--t:2s"><ellipse cx="180" cy="100" rx="132" ry="78" fill="none" stroke="#F2A65A" stroke-width="4" stroke-dasharray="10 8"/><circle cx="236" cy="96" r="30" fill="url(#hot)"/></g></svg></div>
+      <h3 style="font-size:40px;font-weight:500">Misalignment</h3><p>For the fusion model, the PET channel is shifted by 2, 5 or 10 pixels off the CT.</p></div>
+  </div>
+  <p class="band a" style="--d:10">No retraining. We measure the drop in mAP from the clean test set to each degraded one.</p>
+</section>
+
+<!-- 18 APP -->
+<section class="slide" data-title="App">
+  <div class="head"><p class="eyebrow a">Detailed design · App</p><h2 class="a" style="--d:1">The Streamlit app we plan to build</h2></div>
+  <div class="rel" style="width:1664px;height:600px">
+    <svg class="abs a" style="--k:zoom;--d:2;left:0;top:0" width="1664" height="600" viewBox="0 0 1664 600" aria-label="Wireframe of the planned web app: sidebar with patient, slice and model pickers; CT, PET and fused views; a model comparison panel">
+      <rect x="300" y="2" width="1064" height="596" rx="16" fill="#FCFBF8" stroke="#C9C3B7" stroke-width="2"/>
+      <rect x="301" y="3" width="1062" height="44" rx="15" fill="#ECE8E0"/>
+      <circle cx="328" cy="25" r="6" fill="#C9C3B7"/><circle cx="350" cy="25" r="6" fill="#C9C3B7"/><circle cx="372" cy="25" r="6" fill="#C9C3B7"/>
+      <path d="M540,48 L540,597" stroke="#DDD8CE" stroke-width="2"/>
+      <rect x="324" y="100" width="192" height="48" rx="8" fill="#FCFBF8" stroke="#5C6873" stroke-width="2"/><rect x="340" y="117" width="96" height="14" rx="7" fill="#C9C3B7"/>
+      <path d="M478,118 L490,130 L502,118" stroke="#5C6873" stroke-width="4" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+      <path d="M330,266 L510,266" stroke="#C9C3B7" stroke-width="6" stroke-linecap="round"/><circle cx="420" cy="266" r="12" fill="#2E6FB7"/>
+      <rect x="324" y="336" width="192" height="40" rx="8" fill="#ECE8E0"/><rect x="324" y="386" width="192" height="40" rx="8" fill="#ECE8E0"/><rect x="324" y="436" width="192" height="40" rx="8" fill="#0F1B26"/>
+      <rect x="564" y="70" width="248" height="200" rx="10" fill="#0F1B26"/><use href="#ct" x="574" y="100" width="228" height="150"/>
+      <rect x="828" y="70" width="248" height="200" rx="10" fill="#0F1B26"/><use href="#pet" x="838" y="100" width="228" height="150"/>
+      <rect x="1092" y="70" width="248" height="200" rx="10" fill="#0F1B26"/><use href="#fused" x="1102" y="100" width="228" height="150"/>
+      <rect x="1248" y="155" width="40" height="40" fill="none" stroke="#E6EDF3" stroke-width="3" stroke-dasharray="7 5"/><rect x="1252" y="159" width="38" height="38" fill="none" stroke="#F2A65A" stroke-width="4"/>
+      <rect x="564" y="326" width="776" height="250" rx="10" fill="#F5F3EE" stroke="#DDD8CE" stroke-width="2"/>
+      <rect x="588" y="392" width="20" height="20" rx="4" fill="#E8862A"/><rect x="622" y="394" width="220" height="16" rx="8" fill="#C9C3B7"/><rect x="880" y="392" width="436" height="20" rx="10" fill="#DDD8CE"/>
+      <rect class="a growx" style="--k:growx;--d:5;transform-box:fill-box" x="880" y="392" width="340" height="20" rx="10" fill="#E8862A"/>
+      <rect x="588" y="440" width="20" height="20" rx="4" fill="#E8862A" fill-opacity=".5"/><rect x="622" y="442" width="180" height="16" rx="8" fill="#C9C3B7"/><rect x="880" y="440" width="436" height="20" rx="10" fill="#DDD8CE"/>
+      <rect class="a growx" style="--k:growx;--d:6;transform-box:fill-box" x="880" y="440" width="150" height="20" rx="10" fill="#E8862A" fill-opacity=".5"/>
+      <rect x="588" y="506" width="500" height="14" rx="7" fill="#DDD8CE"/><rect x="588" y="534" width="380" height="14" rx="7" fill="#DDD8CE"/>
+      <g stroke="#0F1B26" stroke-width="2" fill="none"><path class="draw" pathLength="1" d="M270,124 L324,124" style="--d:4"/><path class="draw" pathLength="1" d="M270,266 L318,266" style="--d:6"/><path class="draw" pathLength="1" d="M270,406 L324,406" style="--d:8"/><path class="draw" pathLength="1" d="M1292,175 L1394,175" style="--d:10"/><path class="draw" pathLength="1" d="M1316,402 L1394,402" style="--d:12"/></g>
+    </svg>
+    <p class="abs a" style="--d:3;left:324px;top:60px;width:192px;font-weight:600;color:var(--navy)">Test patient</p>
+    <p class="abs a" style="--d:3;left:324px;top:216px;width:192px;font-weight:600;color:var(--navy)">Slice</p>
+    <p class="abs a" style="--d:3;left:324px;top:296px;width:192px;font-weight:600;color:var(--navy)">Model</p>
+    <p class="abs a" style="--d:3;left:340px;top:340px;width:170px">CT only</p>
+    <p class="abs a" style="--d:3;left:340px;top:390px;width:170px">PET only</p>
+    <p class="abs a" style="--d:3;left:340px;top:440px;width:170px;color:#F5F3EE">Fusion</p>
+    <p class="abs a" style="--d:3;left:564px;top:278px;width:248px;color:var(--muted)">CT</p>
+    <p class="abs a" style="--d:3;left:828px;top:278px;width:248px;color:var(--muted)">PET</p>
+    <p class="abs a" style="--d:3;left:1092px;top:278px;width:248px;color:var(--muted)">Fused, with boxes</p>
+    <p class="abs a" style="--d:3;left:588px;top:342px;width:300px;font-weight:600;color:var(--navy)">Model comparison</p>
+    <p class="abs a" style="--k:left;--d:4;left:0;top:78px;width:254px;font-weight:600;line-height:1.3;color:var(--navy);text-align:right">Pick a test patient from the saved results</p>
+    <p class="abs a" style="--k:left;--d:6;left:0;top:220px;width:254px;font-weight:600;line-height:1.3;color:var(--navy);text-align:right">Scroll slice by slice or step through the 3D stack</p>
+    <p class="abs a" style="--k:left;--d:8;left:0;top:360px;width:254px;font-weight:600;line-height:1.3;color:var(--navy);text-align:right">Switch between the CT, PET and fusion models</p>
+    <p class="abs a" style="--k:right;--d:10;left:1410px;top:118px;width:254px;font-weight:600;line-height:1.3;color:var(--navy)">Expert box, dashed, and predicted box with its confidence</p>
+    <p class="abs a" style="--k:right;--d:12;left:1410px;top:340px;width:254px;font-weight:600;line-height:1.3;color:var(--navy)">Metrics, size and robustness results, read from saved files</p>
+  </div>
+</section>
+
+<!-- 19 PILOT -->
+<section class="slide between push" data-title="Prototype" style="gap:28px">
+  <div class="head"><p class="eyebrow a">Status · Prototype</p><h2 class="a" style="--d:1">First end to end test on one patient</h2></div>
+  <div class="rel a" style="--k:zoom;--d:2;height:420px;align-self:center;width:1534px;border-radius:12px;background:var(--card);overflow:hidden" id="pilotbox">
+    <svg class="abs" style="left:0;top:0" width="1534" height="420" viewBox="0 0 1534 420" aria-label="Drawing of four fused validation slices: the model's red box matches the green expert box on the two large-tumor slices and is missing on the two small-tumor slices">
+      <g><rect x="22" y="40" width="360" height="340" rx="10" fill="#0F1B26"/><use href="#fused" x="32" y="90" width="340" height="230"/><rect x="252" y="176" width="58" height="58" fill="none" stroke="#5FCB7A" stroke-width="4"/><rect class="a" style="--k:pop;--d:6" x="256" y="180" width="54" height="56" fill="none" stroke="#E5484D" stroke-width="4"/></g>
+      <g><rect x="402" y="40" width="360" height="340" rx="10" fill="#0F1B26"/><use href="#fused" x="412" y="90" width="340" height="230"/><rect x="632" y="176" width="58" height="58" fill="none" stroke="#5FCB7A" stroke-width="4"/><rect class="a" style="--k:pop;--d:7" x="629" y="174" width="60" height="58" fill="none" stroke="#E5484D" stroke-width="4"/></g>
+      <g><rect x="782" y="40" width="360" height="340" rx="10" fill="#0F1B26"/><use href="#ct" x="792" y="90" width="340" height="230"/><rect x="1028" y="192" width="26" height="26" fill="none" stroke="#5FCB7A" stroke-width="4"/></g>
+      <g><rect x="1162" y="40" width="360" height="340" rx="10" fill="#0F1B26"/><use href="#ct" x="1172" y="90" width="340" height="230"/><rect x="1408" y="192" width="26" height="26" fill="none" stroke="#5FCB7A" stroke-width="4"/></g>
+    </svg>
+  </div>
+  <div class="row">
+    <div class="card a" style="--d:4;padding:24px 32px;gap:8px"><h3>What ran</h3><p>163 fused slices from one patient. A small YOLO trained for 50 epochs on a free Colab GPU.</p></div>
+    <div class="card a" style="--d:5;padding:24px 32px;gap:8px"><h3>What we saw</h3><p>Green is the radiologist, red is the model. It finds the large tumor slices and misses the small ones.</p></div>
+    <div class="card dk a" style="--d:6;padding:24px 32px;gap:8px"><h3>What it is not</h3><p>A result. Training and validation slices share one patient, so we report no scores yet.</p></div>
+  </div>
+</section>
+
+<!-- 20 STATUS -->
+<section class="slide between" data-title="Status">
+  <div class="head"><p class="eyebrow a">Status</p><h2 class="a" style="--d:1">Where we are and what comes next</h2></div>
+  <div class="rel" style="width:1664px">
+    <div class="abs a growx" style="--k:growx;--d:2;--t:.8s;left:16px;top:74px;width:400px;height:4px;background:var(--navy)"></div>
+    <div class="abs a growx" style="--k:growx;--d:8;--t:1.2s;left:416px;top:74px;width:987px;height:4px;background:#C9C3B7"></div>
+    <p class="abs a pill" style="--k:drop;--d:6;left:330px;top:0;width:172px;text-align:center;background:var(--amber);color:var(--navy);padding:6px 0">We are here</p>
+    <div class="abs a" style="--k:drop;--d:6;left:415px;top:44px;width:3px;height:30px;background:var(--amber)"></div>
+    <div class="abs a" style="--k:pop;--d:3;left:0;top:60px;width:32px;height:32px;border-radius:16px;background:var(--navy)"></div>
+    <div class="abs a" style="--k:pop;--d:5;left:277px;top:60px;width:32px;height:32px;border-radius:16px;background:var(--navy)"></div>
+    <div class="abs a" style="--k:pop;--d:9;left:555px;top:60px;width:32px;height:32px;border-radius:16px;background:var(--cream);border:4px solid var(--amber)"></div>
+    <div class="abs a" style="--k:pop;--d:11;left:832px;top:60px;width:32px;height:32px;border-radius:16px;background:var(--cream);border:4px solid #C9C3B7"></div>
+    <div class="abs a" style="--k:pop;--d:13;left:1109px;top:60px;width:32px;height:32px;border-radius:16px;background:var(--cream);border:4px solid #C9C3B7"></div>
+    <div class="abs a" style="--k:pop;--d:15;left:1387px;top:60px;width:32px;height:32px;border-radius:16px;background:var(--cream);border:4px solid #C9C3B7"></div>
+    <div style="display:grid;grid-template-columns:repeat(6,1fr);padding-top:116px">
+      <div class="a" style="--d:3;padding-right:24px;display:flex;flex-direction:column;gap:8px"><p class="label">Done</p><h3 style="font-size:28px">Chapters 1–3</h3><p>Need, requirements and design written</p></div>
+      <div class="a" style="--d:5;padding-right:24px;display:flex;flex-direction:column;gap:8px"><p class="label">Done</p><h3 style="font-size:28px">Prototype</h3><p>One patient, raw scans to predicted boxes</p></div>
+      <div class="a" style="--d:9;padding-right:24px;display:flex;flex-direction:column;gap:8px"><p class="label o">Next</p><h3 style="font-size:28px">Scale to 133</h3><p>All patients, SUV, the split by patient</p></div>
+      <div class="a" style="--d:11;padding-right:24px;display:flex;flex-direction:column;gap:8px"><p class="label" style="color:var(--muted)">Spring 2027</p><h3 style="font-size:28px">Train 3 models</h3><p>CT, PET and fusion with one recipe</p></div>
+      <div class="a" style="--d:13;padding-right:24px;display:flex;flex-direction:column;gap:8px"><p class="label" style="color:var(--muted)">Spring 2027</p><h3 style="font-size:28px">Evaluate</h3><p>Scores, size groups and stress tests</p></div>
+      <div class="a" style="--d:15;padding-right:24px;display:flex;flex-direction:column;gap:8px"><p class="label" style="color:var(--muted)">Spring 2027</p><h3 style="font-size:28px">App and report</h3><p>Streamlit viewer, chapters 4 to 6</p></div>
+    </div>
+  </div>
+  <p class="band a" style="--d:17">Every stage of the design has already run once. What’s left is scale and rigor.</p>
+</section>
+
+<!-- 21 THANKS -->
+<section class="slide dark between" data-title="Thank you">
+  <p class="eyebrow a">Acknowledgements</p>
+  <h2 class="a" style="--d:1;font-size:120px;line-height:1.05;--k:zoom;--t:1s">Thank you. Questions?</h2>
+  <div class="row">
+    <div class="a" style="--d:4;border-top:2px solid #2C4660;padding-top:24px;display:flex;flex-direction:column;gap:8px"><h3 style="font-size:32px;font-weight:500">Dr. Ali Sekmen</h3><p style="color:#9FB0BF">Advisor</p></div>
+    <div class="a" style="--d:5;border-top:2px solid #2C4660;padding-top:24px;display:flex;flex-direction:column;gap:8px"><h3 style="font-size:32px;font-weight:500">Department of Computer Science</h3><p style="color:#9FB0BF">Tennessee State University</p></div>
+    <div class="a" style="--d:6;border-top:2px solid #2C4660;padding-top:24px;display:flex;flex-direction:column;gap:8px"><h3 style="font-size:32px;font-weight:500">The Cancer Imaging Archive</h3><p style="color:#9FB0BF">And the authors of Lung-PET-CT-Dx</p></div>
+  </div>
+</section>
+
+</div>
+<div id="hud"><div id="bar"></div></div>
+<div id="count"></div>
+<div id="help">← → or click to move · F full screen</div>
+
+<script>
+(function(){
+  var stage=document.getElementById('stage');
+  var slides=[].slice.call(document.querySelectorAll('.slide'));
+  var bar=document.getElementById('bar'),count=document.getElementById('count'),help=document.getElementById('help');
+  var cur=-1;
+  slides.forEach(function(s,i){var p=document.createElement('div');p.className='pg';p.textContent=i+1;s.appendChild(p);});
+  function fit(){var s=Math.min(window.innerWidth/1920,window.innerHeight/1080);stage.style.transform='translate(-50%,-50%) scale('+s+')';}
+  window.addEventListener('resize',fit);fit();
+  var reduce=window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  function countUp(slide){
+    [].forEach.call(slide.querySelectorAll('[data-count]'),function(el){
+      var end=parseFloat(el.dataset.count),dec=parseInt(el.dataset.dec||'0',10),suf=el.dataset.suffix||'';
+      if(reduce){el.textContent=end.toFixed(dec)+suf;return;}
+      var start=null,dur=1300,delay=450;el.textContent=(0).toFixed(dec)+suf;
+      function step(t){if(!start)start=t;var e=t-start-delay;if(e<0){requestAnimationFrame(step);return;}
+        var k=Math.min(1,e/dur);k=1-Math.pow(1-k,3);el.textContent=(end*k).toFixed(dec)+suf;if(k<1)requestAnimationFrame(step);}
+      requestAnimationFrame(step);
+    });
+  }
+  function go(n){
+    n=Math.max(0,Math.min(slides.length-1,n));if(n===cur)return;
+    if(cur>=0){var old=slides[cur];old.classList.remove('active');old.classList.add('leaving');setTimeout(function(){old.classList.remove('leaving');},600);}
+    cur=n;var s=slides[cur];void s.offsetWidth;s.classList.add('active');countUp(s);
+    bar.style.width=((cur+1)/slides.length*100)+'%';count.textContent=(cur+1)+' / '+slides.length;
+    if(location.hash!=='#'+(cur+1))history.replaceState(null,'','#'+(cur+1));
+  }
+  function next(){go(cur+1)}function prev(){go(cur-1)}
+  document.addEventListener('keydown',function(e){
+    if(['ArrowRight','PageDown',' ','Enter'].indexOf(e.key)>-1){e.preventDefault();next();}
+    else if(['ArrowLeft','PageUp','Backspace'].indexOf(e.key)>-1){e.preventDefault();prev();}
+    else if(e.key==='Home')go(0);else if(e.key==='End')go(slides.length-1);
+    else if(e.key==='f'||e.key==='F'){try{var r=!document.fullscreenElement?(document.documentElement.requestFullscreen&&document.documentElement.requestFullscreen()):(document.exitFullscreen&&document.exitFullscreen());if(r&&r.catch)r.catch(function(){});}catch(_){}}
+  });
+  document.addEventListener('click',function(e){if(e.clientX<window.innerWidth/3)prev();else next();});
+  var tx=null;document.addEventListener('touchstart',function(e){tx=e.touches[0].clientX},{passive:true});
+  document.addEventListener('touchend',function(e){if(tx===null)return;var dx=e.changedTouches[0].clientX-tx;if(Math.abs(dx)>40){dx<0?next():prev();}tx=null;});
+  setTimeout(function(){help.style.opacity=0},6000);
+  var h=parseInt((location.hash||'').slice(1),10);go(isNaN(h)?0:h-1);
+})();
+</script>
+</body>
+</html>
