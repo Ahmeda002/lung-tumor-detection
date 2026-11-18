@@ -144,7 +144,7 @@ svg .a:not(.growx){transform-box:fill-box;transform-origin:center}
     <div class="card a" style="--d:4;padding:32px"><p class="num sm blue">AI</p><h3>a second opinion</h3><p>It never gets tired, but it has its own limits and errors.</p></div>
     <div class="card a" style="--d:5;padding:32px"><p class="num sm org" data-count="2">2</p><h3>scans for cancer</h3><p>CT shows shape, PET shows activity. Neither alone gives the full picture.</p></div>
   </div>
-  <p class="band a" style="--d:7">We run the same detector three times, on CT, on PET and on the fused version, and compare how well each one finds and locates tumors.</p>
+  <p class="band a" style="--d:7">Next semester, we’ll train the same detector on CT, PET, and fused PET/CT. We’ll compare how well each finds and locates tumors.</p>
 </section>
 
 <!-- 4 SCANS -->
@@ -299,38 +299,16 @@ svg .a:not(.growx){transform-box:fill-box;transform-origin:center}
 </section>
 
 <!-- 12 WHY THREE CHANNELS -->
-<section class="slide" data-title="Why three channels">
-  <div class="head"><p class="eyebrow a">Detailed design · Fusion</p><h2 class="a" style="--d:1">Why we feed the model three channels</h2></div>
-  <div class="rel" style="height:460px">
-    <svg class="abs" style="left:0;top:0" width="1664" height="460" viewBox="0 0 1664 460" aria-label="Three drawn scan tiles, CT lung window, CT mediastinal window and PET, stack into one combined image">
-      <g class="a" style="--k:left;--d:2"><rect x="2" y="4" width="262" height="176" rx="12" fill="#0F1B26" stroke="#F5F3EE" stroke-width="3"/><use href="#lungwin" x="12" y="10" width="242" height="164"/></g>
-      <g class="a" style="--k:left;--d:5"><rect x="70" y="142" width="262" height="176" rx="12" fill="#0F1B26" stroke="#F5F3EE" stroke-width="3"/><use href="#medwin" x="80" y="148" width="242" height="164"/></g>
-      <g class="a" style="--k:left;--d:8"><rect x="140" y="280" width="262" height="176" rx="12" fill="#0F1B26" stroke="#F5F3EE" stroke-width="3"/><use href="#pet" x="150" y="286" width="242" height="164"/></g>
-      <path class="draw" pathLength="1" d="M264,61 L434,61" stroke="#5C6873" stroke-width="2" fill="none" style="--d:3"/>
-      <path class="draw" pathLength="1" d="M332,207 L434,207" stroke="#5C6873" stroke-width="2" fill="none" style="--d:6"/>
-      <path class="draw" pathLength="1" d="M402,353 L434,353" stroke="#5C6873" stroke-width="2" fill="none" style="--d:9"/>
-      <path class="draw" pathLength="1" d="M1010,227 L1106,227" stroke="#0F1B26" stroke-width="8" fill="none" style="--d:11"/>
-      <path class="a" style="--k:fade;--d:12" d="M1100,203 L1138,227 L1100,251 Z" fill="#0F1B26"/>
-      <g class="a" style="--k:zoom;--d:13"><rect x="1170" y="70" width="417" height="314" rx="16" fill="#0F1B26"/><use href="#fused" x="1180" y="80" width="397" height="294"/></g>
-    </svg>
-    <p class="abs a" style="--d:3;left:454px;top:5px;width:520px;font-weight:600;color:var(--blue)">A photo’s red layer becomes</p>
-    <p class="abs a" style="--d:3;left:454px;top:39px;width:520px;font-size:30px;font-weight:600;color:var(--navy)">CT lung window</p>
-    <p class="abs a" style="--d:3;left:454px;top:83px;width:520px;color:var(--muted)">Air goes black, so nodules stand out</p>
-    <p class="abs a" style="--d:6;left:454px;top:151px;width:520px;font-weight:600;color:var(--blue)">The green layer becomes</p>
-    <p class="abs a" style="--d:6;left:454px;top:185px;width:520px;font-size:30px;font-weight:600;color:var(--navy)">CT mediastinal window</p>
-    <p class="abs a" style="--d:6;left:454px;top:229px;width:520px;color:var(--muted)">Heart, vessels and chest wall</p>
-    <p class="abs a" style="--d:9;left:454px;top:297px;width:520px;font-weight:600;color:var(--orange)">The blue layer becomes</p>
-    <p class="abs a" style="--d:9;left:454px;top:331px;width:520px;font-size:30px;font-weight:600;color:var(--navy)">PET activity</p>
-    <p class="abs a" style="--d:9;left:454px;top:375px;width:520px;color:var(--muted)">Where cells burn sugar fast</p>
-    <p class="abs a" style="--d:13;left:1170px;top:20px;width:494px;font-size:30px;font-weight:600;color:var(--navy)">Looks like one normal photo</p>
-    <p class="abs a" style="--d:14;left:1170px;top:398px;width:494px;color:var(--muted)">So a detector trained on photos can read it</p>
-  </div>
+<section class="slide between" data-title="Why three channels">
+  <div class="head"><p class="eyebrow a">Detailed design · Fusion</p><h2 class="a" style="--d:1">Each channel adds different information</h2></div>
   <div class="row">
-    <div class="card a" style="--d:15;padding:24px 32px;gap:6px"><h3>One window isn’t enough</h3><p>CT spans about 2,000 HU, but an image holds 256 grays.</p></div>
-    <div class="card a" style="--d:16;padding:24px 32px;gap:6px"><h3>PET adds activity</h3><p>The tumor glows even where it blends in on CT.</p></div>
-    <div class="card dk a" style="--d:17;padding:24px 32px;gap:6px"><h3>Reuse a trained detector</h3><p>No new layers, unlike two-branch models like CMYOLOv5.</p></div>
+    <div class="card a" style="--d:2;padding:40px;gap:12px"><h3>CT lung window</h3><p class="lg">Makes nodules stand out against air-filled lung.</p></div>
+    <div class="card a" style="--d:3;padding:40px;gap:12px"><h3>CT mediastinal window</h3><p class="lg">Shows soft tissue around the heart and chest wall.</p></div>
+    <div class="card a" style="--d:4;padding:40px;gap:12px"><h3>PET activity</h3><p class="lg">Shows where the tracer accumulates.</p></div>
   </div>
+  <p class="band a" style="--d:5">The three aligned views fit the three-channel input YOLO expects.</p>
 </section>
+
 
 <!-- 13 REAL PATIENT -->
 <section class="slide" data-title="Real patient">
@@ -448,7 +426,7 @@ svg .a:not(.growx){transform-box:fill-box;transform-origin:center}
 
 <!-- 18 APP -->
 <section class="slide" data-title="App">
-  <div class="head"><p class="eyebrow a">Detailed design · App</p><h2 class="a" style="--d:1">The Streamlit app we plan to build</h2></div>
+  <div class="head"><p class="eyebrow a">Detailed design · App</p><h2 class="a" style="--d:1">The Streamlit patient viewer prototype</h2></div>
   <div class="viewer-layout">
     <video class="viewer-screenshot a" style="--k:zoom;--d:2" width="1404" height="964" muted playsinline preload="metadata" poster="app-live-screenshot.png" aria-label="Silent recording of the Streamlit viewer changing slices and models with synthetic demo data">
       <source src="app-viewer-animation.mp4" type="video/mp4">
