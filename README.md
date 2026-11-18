@@ -5,8 +5,6 @@ COMP 4500 Senior Project · Tennessee State University, Department of Computer S
 **Team:** Ahmed Abdikadir and Julian Padron
 **Advisor:** Dr. Ali Sekmen
 
-**[View the presentation](https://ahmeda002.github.io/lung-tumor-detection/presentation/)** (use the arrow keys or click to move, F for full screen)
-
 ## Overview
 
 CT shows anatomy (shape and edges) and PET shows metabolic activity, but neither scan alone gives the full picture. This project trains one YOLO detector three times — on CT only, PET only, and fused PET/CT — under identical conditions, and compares how well each finds and localizes lung tumors.
@@ -53,10 +51,56 @@ The prototype trains and validates on slices from the same patient, so it report
 | `notebooks/lung_tumor_prototype.ipynb` | Colab notebook for the one-patient prototype: downloads annotations and DICOM series from TCIA/IDC, aligns PET to CT, builds the fused 3-channel slices, exports YOLO labels, and trains YOLO11n for 50 epochs |
 | `notebooks/lung_tumor_yolo_demo.ipynb` | Earlier end-to-end demo notebook: windowing, PET normalization, fusion and box conversion on a small multi-patient pull from IDC |
 | `presentation/index.html` | Project presentation. Open it in a browser; use ← / → or click to move, F for full screen |
+| `app/` | Patient Viewer Application (Streamlit): step through a test patient's slices, switch models, compare expert and predicted boxes, and view saved metrics and robustness results |
+| `scripts/` | Helpers for the app: save each model's predictions, tune confidence thresholds on validation, and make synthetic demo data |
+| `tests/` | Unit tests for the app's box matching, file reading and drawing |
 
 ## Running the notebooks
 
 Open them in Google Colab with a GPU runtime and run the cells top to bottom. They install `idc-index`, `pydicom`, `SimpleITK` and `ultralytics`, and download the data they need. No patient data is stored in this repository.
+
+## Patient Viewer Application
+
+A Streamlit app for reviewing results, laid out like the mockup in the presentation and sized to fit on one screen. The sidebar holds the test patient, the slice (with buttons that jump to the next slice with an expert box) and the model: CT only, PET only or PET/CT fusion. The main area shows that slice as CT, PET and fused PET/CT side by side, each with the expert box (green, dashed) and the chosen model's box (solid, with its confidence: red when it matches an expert box at IoU ≥ 0.5, orange when it doesn't). A strip under the images shows where the expert marked tumor across the whole scan next to the model's confidence on each slice. Along the bottom are the model comparison (with bootstrap confidence intervals), the tumor-size breakdown and the robustness tests.
+
+The app only reads saved files. It never trains or runs a model, so it shows exactly what was evaluated.
+
+**Try it with demo data** (synthetic scans and made-up scores, clearly flagged in the app):
+
+```bash
+pip install -r requirements-app.txt
+python scripts/make_demo_data.py --out demo
+streamlit run app/streamlit_app.py -- --root demo
+```
+
+**Use it with real results.** The app expects one Ultralytics dataset folder per modality, with the same file names as the prototype notebook (`<patient>_<slice>.png`):
+
+```
+yolo_data/{ct,pet,fusion}/images/{val,test}/Lung_Dx-A0164_042.png
+yolo_data/{ct,pet,fusion}/labels/{val,test}/Lung_Dx-A0164_042.txt
+```
+
+Export **every** slice of the val and test patients, not only the slices with a tumor, so the viewer can show false alarms on healthy slices. Then:
+
+```bash
+# 1. Save each model's boxes once (needs ultralytics)
+python scripts/export_predictions.py --weights ct=runs/ct/weights/best.pt \
+    pet=runs/pet/weights/best.pt fusion=runs/fusion/weights/best.pt --splits val test
+# 2. Pick each model's confidence threshold on the validation patients
+python scripts/tune_thresholds.py
+# 3. Open the viewer
+streamlit run app/streamlit_app.py
+```
+
+For the comparison and robustness tabs, the evaluation code writes these tables to `results/`:
+
+| File | Columns |
+|---|---|
+| `metrics.csv` | `model, metric, value, ci_low, ci_high` |
+| `metrics_by_size.csv` | `model, size_bin, metric, value, ci_low, ci_high` |
+| `robustness.csv` | `model, perturbation, level, metric, value` |
+
+`model` is `ct`, `pet` or `fusion`. Folder names and display settings are in `app/config.py`. Run the tests with `pytest tests`.
 
 ## Data and citation
 

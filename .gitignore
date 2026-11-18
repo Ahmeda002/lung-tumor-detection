@@ -11,6 +11,8 @@ dicom/
 ann/
 yolo_data/
 runs/
+demo/
+results/predictions/
 *.dcm
 *.zip
 *.pt
