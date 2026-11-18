@@ -292,7 +292,7 @@ def _font(size: int):
             return ImageFont.truetype(name, size)
         except OSError:
             continue
-    return ImageFont.load_default()
+    return ImageFont.load_default(size=size)
 
 
 def _dashed_rect(draw: ImageDraw.ImageDraw, xyxy, color, width: int, dash: int = 8, gap: int = 6):
@@ -318,6 +318,7 @@ def draw_overlay(
     show_gt: bool = True,
     show_pred: bool = True,
     line_width: int = 3,
+    font_size: int | None = None,
 ) -> Image.Image:
     """Draw expert boxes (green, dashed) and model boxes (solid: red if they
     match an expert box, orange if not) with their confidence.
@@ -327,7 +328,7 @@ def draw_overlay(
     out = img.copy()
     draw = ImageDraw.Draw(out)
     W, H = out.size
-    font = _font(max(12, W // 40))
+    font = _font(font_size or max(12, W // 40))
     m = match_boxes(preds, gts, iou_thr)
     matched = {id(p) for p, _, _ in m.tp}
 
@@ -340,9 +341,10 @@ def draw_overlay(
                 label = f"{p.conf:.2f}"
                 tb = draw.textbbox((0, 0), label, font=font)
                 tw, th = tb[2] - tb[0], tb[3] - tb[1]
-                ty = y1 - th - 6 if y1 - th - 6 >= 0 else y2 + 2
-                draw.rectangle((x1, ty, x1 + tw + 6, ty + th + 6), fill=color)
-                draw.text((x1 + 3, ty + 1), label, fill=(0, 0, 0), font=font)
+                tx = max(0, min(x1, W - tw - 8))
+                ty = y1 - th - 8 if y1 >= th + 8 else min(y2 + 2, H - th - 8)
+                draw.rectangle((tx, ty, tx + tw + 8, ty + th + 8), fill=color)
+                draw.text((tx + 4 - tb[0], ty + 4 - tb[1]), label, fill=(0, 0, 0), font=font)
     if show_gt:
         for g in gts:
             _dashed_rect(draw, g.xyxy(W, H), GT_COLOR, line_width)

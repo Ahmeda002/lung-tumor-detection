@@ -57,13 +57,18 @@ The prototype trains and validates on slices from the same patient, so it report
 
 ## Running the notebooks
 
-Open them in Google Colab with a GPU runtime and run the cells top to bottom. They install `idc-index`, `pydicom`, `SimpleITK` and `ultralytics`, and download the data they need. No patient data is stored in this repository.
+Open them in Google Colab with a GPU runtime and run the cells top to bottom. They install `idc-index`, `pydicom`, `SimpleITK` and `ultralytics`, and download the raw scan volumes. The repository includes rendered examples in the notebook and presentation.
 
 ## Patient Viewer Application
 
-A Streamlit app for reviewing results, laid out like the mockup in the presentation and sized to fit on one screen. The sidebar holds the test patient, the slice (with buttons that jump to the next slice with an expert box) and the model: CT only, PET only or PET/CT fusion. The main area shows that slice as CT, PET and fused PET/CT side by side, each with the expert box (green, dashed) and the chosen model's box (solid, with its confidence: red when it matches an expert box at IoU ≥ 0.5, orange when it doesn't). A strip under the images shows where the expert marked tumor across the whole scan next to the model's confidence on each slice. Along the bottom are the model comparison (with bootstrap confidence intervals), the tumor-size breakdown and the robustness tests.
+The presentation’s **Patient viewer demo** slide plays a narrated walkthrough of the Streamlit app. The **Semester 1 prototype** view opens on patient Lung_Dx-A0164 and lets you jump between the detection on slice 290 and the missed tumor on slice 306. It uses the saved notebook figure shown on the **Prototype** slide. CT and PET are channel views derived from that figure. The model comparison shows labeled example scores for the planned evaluation. Training and validation slices for the prototype came from the same patient.
 
-The app only reads saved files. It never trains or runs a model, so it shows exactly what was evaluated.
+**Open the presentation viewer** from the repository root:
+
+```bash
+pip install -r requirements-app.txt
+streamlit run app/streamlit_app.py
+```
 
 **Try it with demo data** (synthetic scans and made-up scores, clearly flagged in the app):
 
@@ -73,7 +78,9 @@ python scripts/make_demo_data.py --out demo
 streamlit run app/streamlit_app.py -- --root demo
 ```
 
-**Use it with real results.** The app expects one Ultralytics dataset folder per modality, with the same file names as the prototype notebook (`<patient>_<slice>.png`):
+Choose **Synthetic dataset** from the sidebar to try the full viewer controls.
+
+**Use it with real results.** The test dataset view lets you choose a patient, slice and model, compare saved predictions with expert boxes, and read saved metrics. It opens by default when test data is present. The app expects one Ultralytics dataset folder per modality, with the same file names as the prototype notebook (`<patient>_<slice>.png`):
 
 ```
 yolo_data/{ct,pet,fusion}/images/{val,test}/Lung_Dx-A0164_042.png
