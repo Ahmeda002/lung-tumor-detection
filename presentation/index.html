@@ -53,10 +53,11 @@ p{font-size:24px;line-height:1.38}
 #help{position:fixed;left:18px;bottom:14px;font:13px var(--sans);color:rgba(255,255,255,.45);z-index:5;transition:opacity 1s}
 .pg{position:absolute;right:64px;bottom:44px;font-size:22px;color:#A9A397}
 .dark .pg,.accent .pg{color:rgba(230,237,243,.45)}
-.viewer-gallery{display:grid;grid-template-columns:minmax(0,2.8fr) minmax(0,1fr);gap:32px}
-.viewer-gallery img{display:block;width:100%;height:auto;border:1px solid var(--line);border-radius:14px;background:var(--card)}
-.viewer-gallery figcaption{margin-top:14px;font-size:24px;color:var(--muted)}
-.viewer-gallery figcaption strong{color:var(--navy)}
+.viewer-layout{position:relative;width:1664px;height:731px;flex:none}
+.viewer-screenshot{position:absolute;left:300px;top:0;display:block;width:1064px;height:auto;border:2px solid var(--line);border-radius:14px;background:var(--card)}
+.viewer-note{position:absolute;width:254px;font-weight:600;line-height:1.3;color:var(--navy)}
+.viewer-note.left{left:0;text-align:right;--k:left}
+.viewer-note.right{right:0;--k:right}
 .demo-video{display:block;width:1168px;aspect-ratio:16/9;align-self:center;border-radius:16px;background:var(--navy)}
 .demo-video a{color:var(--cream)}
 .demo-audio-note{position:absolute;right:128px;bottom:60px;left:128px;text-align:center;color:var(--muted);font-size:22px}
@@ -445,16 +446,23 @@ svg .a:not(.growx){transform-box:fill-box;transform-origin:center}
 
 <!-- 18 APP -->
 <section class="slide" data-title="App">
-  <div class="head"><p class="eyebrow a">Semester 1 · App</p><h2 class="a" style="--d:1">The Streamlit patient viewer</h2></div>
-  <div class="viewer-gallery">
-    <figure class="a" style="--d:2">
-      <img src="app-detection.png" width="1398" height="486" alt="The patient viewer showing CT, PET, and fused scans for slice 290, with a detection on the fused scan">
-      <figcaption><strong>Detection</strong> · Slice 290</figcaption>
-    </figure>
-    <figure class="a" style="--d:3">
-      <img src="app-missed-tumor.png" width="424" height="422" alt="The viewer's fused scan for slice 306 showing the radiologist's green box">
-      <figcaption><strong>Missed tumor</strong> · Slice 306</figcaption>
-    </figure>
+  <div class="head"><p class="eyebrow a">Detailed design · App</p><h2 class="a" style="--d:1">The Streamlit app we plan to build</h2></div>
+  <div class="viewer-layout">
+    <img class="viewer-screenshot a" style="--k:zoom;--d:2" src="app-live-screenshot.png" width="1404" height="964" alt="The running Streamlit patient viewer in synthetic dataset mode, showing the patient, slice and model controls, three scan views, and saved comparison panels">
+    <svg class="abs" width="1664" height="731" viewBox="0 0 1664 731" aria-hidden="true">
+      <g stroke="#0F1B26" stroke-width="2" fill="none">
+        <path class="draw" pathLength="1" d="M270,126 L300,144" style="--d:4"/>
+        <path class="draw" pathLength="1" d="M270,228 L300,206" style="--d:6"/>
+        <path class="draw" pathLength="1" d="M270,350 L300,334" style="--d:8"/>
+        <path class="draw" pathLength="1" d="M1364,201 L1394,201" style="--d:10"/>
+        <path class="draw" pathLength="1" d="M1364,504 L1394,504" style="--d:12"/>
+      </g>
+    </svg>
+    <p class="viewer-note left a" style="--d:4;top:84px">Pick a test patient from the saved results</p>
+    <p class="viewer-note left a" style="--d:6;top:188px">Scroll slice by slice or step through the 3D stack</p>
+    <p class="viewer-note left a" style="--d:8;top:308px">Switch between the CT, PET and fusion models</p>
+    <p class="viewer-note right a" style="--d:10;top:154px">Expert box, dashed, and predicted box with its confidence</p>
+    <p class="viewer-note right a" style="--d:12;top:457px">Metrics, size and robustness results, read from saved files</p>
   </div>
 </section>
 
