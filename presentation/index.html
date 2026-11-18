@@ -53,6 +53,10 @@ p{font-size:24px;line-height:1.38}
 #help{position:fixed;left:18px;bottom:14px;font:13px var(--sans);color:rgba(255,255,255,.45);z-index:5;transition:opacity 1s}
 .pg{position:absolute;right:64px;bottom:44px;font-size:22px;color:#A9A397}
 .dark .pg,.accent .pg{color:rgba(230,237,243,.45)}
+.viewer-gallery{display:grid;grid-template-columns:minmax(0,2.8fr) minmax(0,1fr);gap:32px}
+.viewer-gallery img{display:block;width:100%;height:auto;border:1px solid var(--line);border-radius:14px;background:var(--card)}
+.viewer-gallery figcaption{margin-top:14px;font-size:24px;color:var(--muted)}
+.viewer-gallery figcaption strong{color:var(--navy)}
 .demo-video{display:block;width:1168px;aspect-ratio:16/9;align-self:center;border-radius:16px;background:var(--navy)}
 .demo-video a{color:var(--cream)}
 .demo-audio-note{position:absolute;right:128px;bottom:60px;left:128px;text-align:center;color:var(--muted);font-size:22px}
@@ -441,44 +445,16 @@ svg .a:not(.growx){transform-box:fill-box;transform-origin:center}
 
 <!-- 18 APP -->
 <section class="slide" data-title="App">
-  <div class="head"><p class="eyebrow a">Detailed design · App</p><h2 class="a" style="--d:1">The Streamlit app we plan to build</h2></div>
-  <div class="rel" style="width:1664px;height:600px">
-    <svg class="abs a" style="--k:zoom;--d:2;left:0;top:0" width="1664" height="600" viewBox="0 0 1664 600" aria-label="Wireframe of the planned web app: sidebar with patient, slice and model pickers; CT, PET and fused views; a model comparison panel">
-      <rect x="300" y="2" width="1064" height="596" rx="16" fill="#FCFBF8" stroke="#C9C3B7" stroke-width="2"/>
-      <rect x="301" y="3" width="1062" height="44" rx="15" fill="#ECE8E0"/>
-      <circle cx="328" cy="25" r="6" fill="#C9C3B7"/><circle cx="350" cy="25" r="6" fill="#C9C3B7"/><circle cx="372" cy="25" r="6" fill="#C9C3B7"/>
-      <path d="M540,48 L540,597" stroke="#DDD8CE" stroke-width="2"/>
-      <rect x="324" y="100" width="192" height="48" rx="8" fill="#FCFBF8" stroke="#5C6873" stroke-width="2"/><rect x="340" y="117" width="96" height="14" rx="7" fill="#C9C3B7"/>
-      <path d="M478,118 L490,130 L502,118" stroke="#5C6873" stroke-width="4" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
-      <path d="M330,266 L510,266" stroke="#C9C3B7" stroke-width="6" stroke-linecap="round"/><circle cx="420" cy="266" r="12" fill="#2E6FB7"/>
-      <rect x="324" y="336" width="192" height="40" rx="8" fill="#ECE8E0"/><rect x="324" y="386" width="192" height="40" rx="8" fill="#ECE8E0"/><rect x="324" y="436" width="192" height="40" rx="8" fill="#0F1B26"/>
-      <rect x="564" y="70" width="248" height="200" rx="10" fill="#0F1B26"/><use href="#ct" x="574" y="100" width="228" height="150"/>
-      <rect x="828" y="70" width="248" height="200" rx="10" fill="#0F1B26"/><use href="#pet" x="838" y="100" width="228" height="150"/>
-      <rect x="1092" y="70" width="248" height="200" rx="10" fill="#0F1B26"/><use href="#fused" x="1102" y="100" width="228" height="150"/>
-      <rect x="1248" y="155" width="40" height="40" fill="none" stroke="#E6EDF3" stroke-width="3" stroke-dasharray="7 5"/><rect x="1252" y="159" width="38" height="38" fill="none" stroke="#F2A65A" stroke-width="4"/>
-      <rect x="564" y="326" width="776" height="250" rx="10" fill="#F5F3EE" stroke="#DDD8CE" stroke-width="2"/>
-      <rect x="588" y="392" width="20" height="20" rx="4" fill="#E8862A"/><rect x="622" y="394" width="220" height="16" rx="8" fill="#C9C3B7"/><rect x="880" y="392" width="436" height="20" rx="10" fill="#DDD8CE"/>
-      <rect class="a growx" style="--k:growx;--d:5;transform-box:fill-box" x="880" y="392" width="340" height="20" rx="10" fill="#E8862A"/>
-      <rect x="588" y="440" width="20" height="20" rx="4" fill="#E8862A" fill-opacity=".5"/><rect x="622" y="442" width="180" height="16" rx="8" fill="#C9C3B7"/><rect x="880" y="440" width="436" height="20" rx="10" fill="#DDD8CE"/>
-      <rect class="a growx" style="--k:growx;--d:6;transform-box:fill-box" x="880" y="440" width="150" height="20" rx="10" fill="#E8862A" fill-opacity=".5"/>
-      <rect x="588" y="506" width="500" height="14" rx="7" fill="#DDD8CE"/><rect x="588" y="534" width="380" height="14" rx="7" fill="#DDD8CE"/>
-      <g stroke="#0F1B26" stroke-width="2" fill="none"><path class="draw" pathLength="1" d="M270,124 L324,124" style="--d:4"/><path class="draw" pathLength="1" d="M270,266 L318,266" style="--d:6"/><path class="draw" pathLength="1" d="M270,406 L324,406" style="--d:8"/><path class="draw" pathLength="1" d="M1292,175 L1394,175" style="--d:10"/><path class="draw" pathLength="1" d="M1316,402 L1394,402" style="--d:12"/></g>
-    </svg>
-    <p class="abs a" style="--d:3;left:324px;top:60px;width:192px;font-weight:600;color:var(--navy)">Test patient</p>
-    <p class="abs a" style="--d:3;left:324px;top:216px;width:192px;font-weight:600;color:var(--navy)">Slice</p>
-    <p class="abs a" style="--d:3;left:324px;top:296px;width:192px;font-weight:600;color:var(--navy)">Model</p>
-    <p class="abs a" style="--d:3;left:340px;top:340px;width:170px">CT only</p>
-    <p class="abs a" style="--d:3;left:340px;top:390px;width:170px">PET only</p>
-    <p class="abs a" style="--d:3;left:340px;top:440px;width:170px;color:#F5F3EE">Fusion</p>
-    <p class="abs a" style="--d:3;left:564px;top:278px;width:248px;color:var(--muted)">CT</p>
-    <p class="abs a" style="--d:3;left:828px;top:278px;width:248px;color:var(--muted)">PET</p>
-    <p class="abs a" style="--d:3;left:1092px;top:278px;width:248px;color:var(--muted)">Fused, with boxes</p>
-    <p class="abs a" style="--d:3;left:588px;top:342px;width:300px;font-weight:600;color:var(--navy)">Model comparison</p>
-    <p class="abs a" style="--k:left;--d:4;left:0;top:78px;width:254px;font-weight:600;line-height:1.3;color:var(--navy);text-align:right">Pick a test patient from the saved results</p>
-    <p class="abs a" style="--k:left;--d:6;left:0;top:220px;width:254px;font-weight:600;line-height:1.3;color:var(--navy);text-align:right">Scroll slice by slice or step through the 3D stack</p>
-    <p class="abs a" style="--k:left;--d:8;left:0;top:360px;width:254px;font-weight:600;line-height:1.3;color:var(--navy);text-align:right">Switch between the CT, PET and fusion models</p>
-    <p class="abs a" style="--k:right;--d:10;left:1410px;top:118px;width:254px;font-weight:600;line-height:1.3;color:var(--navy)">Expert box, dashed, and predicted box with its confidence</p>
-    <p class="abs a" style="--k:right;--d:12;left:1410px;top:340px;width:254px;font-weight:600;line-height:1.3;color:var(--navy)">Metrics, size and robustness results, read from saved files</p>
+  <div class="head"><p class="eyebrow a">Semester 1 · App</p><h2 class="a" style="--d:1">The Streamlit patient viewer</h2></div>
+  <div class="viewer-gallery">
+    <figure class="a" style="--d:2">
+      <img src="app-detection.png" width="1398" height="486" alt="The patient viewer showing CT, PET, and fused scans for slice 290, with a detection on the fused scan">
+      <figcaption><strong>Detection</strong> · Slice 290</figcaption>
+    </figure>
+    <figure class="a" style="--d:3">
+      <img src="app-missed-tumor.png" width="424" height="422" alt="The viewer's fused scan for slice 306 showing the radiologist's green box">
+      <figcaption><strong>Missed tumor</strong> · Slice 306</figcaption>
+    </figure>
   </div>
 </section>
 
