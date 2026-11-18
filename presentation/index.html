@@ -58,6 +58,8 @@ p{font-size:24px;line-height:1.38}
 .viewer-note{position:absolute;width:254px;font-weight:600;line-height:1.3;color:var(--navy)}
 .viewer-note.left{left:0;text-align:right;--k:left}
 .viewer-note.right{right:0;--k:right}
+.viewer-motion-toggle{position:absolute;left:300px;bottom:-38px;padding:4px 12px;border:1px solid var(--line);border-radius:6px;background:var(--card);color:var(--navy);font:600 18px var(--sans);cursor:pointer}
+.viewer-motion-toggle:focus-visible{outline:2px solid var(--blue);outline-offset:2px}
 .demo-video{display:block;width:1168px;aspect-ratio:16/9;align-self:center;border-radius:16px;background:var(--navy)}
 .demo-video a{color:var(--cream)}
 .demo-audio-note{position:absolute;right:128px;bottom:60px;left:128px;text-align:center;color:var(--muted);font-size:22px}
@@ -448,7 +450,10 @@ svg .a:not(.growx){transform-box:fill-box;transform-origin:center}
 <section class="slide" data-title="App">
   <div class="head"><p class="eyebrow a">Detailed design · App</p><h2 class="a" style="--d:1">The Streamlit app we plan to build</h2></div>
   <div class="viewer-layout">
-    <img class="viewer-screenshot a" style="--k:zoom;--d:2" src="app-live-screenshot.png" width="1404" height="964" alt="The running Streamlit patient viewer in synthetic dataset mode, showing the patient, slice and model controls, three scan views, and saved comparison panels">
+    <video class="viewer-screenshot a" style="--k:zoom;--d:2" width="1404" height="964" muted playsinline preload="metadata" poster="app-live-screenshot.png" aria-label="Silent recording of the Streamlit viewer changing slices and models with synthetic demo data">
+      <source src="app-viewer-animation.mp4" type="video/mp4">
+      <img src="app-live-screenshot.png" width="1404" height="964" alt="The running Streamlit patient viewer showing the controls, three scan views, and saved comparison panels">
+    </video>
     <svg class="abs" width="1664" height="731" viewBox="0 0 1664 731" aria-hidden="true">
       <g stroke="#0F1B26" stroke-width="2" fill="none">
         <path class="draw" pathLength="1" d="M270,126 L300,144" style="--d:4"/>
@@ -463,6 +468,7 @@ svg .a:not(.growx){transform-box:fill-box;transform-origin:center}
     <p class="viewer-note left a" style="--d:8;top:308px">Switch between the CT, PET and fusion models</p>
     <p class="viewer-note right a" style="--d:10;top:154px">Expert box, dashed, and predicted box with its confidence</p>
     <p class="viewer-note right a" style="--d:12;top:457px">Metrics, size and robustness results, read from saved files</p>
+    <button class="viewer-motion-toggle" type="button" hidden>Play animation</button>
   </div>
 </section>
 
@@ -540,6 +546,8 @@ svg .a:not(.growx){transform-box:fill-box;transform-origin:center}
   var stage=document.getElementById('stage');
   var slides=[].slice.call(document.querySelectorAll('.slide'));
   var bar=document.getElementById('bar'),count=document.getElementById('count'),help=document.getElementById('help');
+  var viewerMotion=document.querySelector('video.viewer-screenshot');
+  var viewerMotionToggle=document.querySelector('.viewer-motion-toggle');
   var demoVideo=document.querySelector('.demo-video');
   var demoAudioNote=document.querySelector('.demo-audio-note');
   var demoVisit=0,demoMutedForAutoplay=false;
@@ -576,21 +584,39 @@ svg .a:not(.growx){transform-box:fill-box;transform-origin:center}
     demoMutedForAutoplay=false;
     demoAudioNote.hidden=true;
   }
+  function playViewerMotion(){viewerMotion.play().catch(function(){});}
+  function updateViewerMotionToggle(){
+    viewerMotionToggle.textContent=viewerMotion.paused
+      ? (viewerMotion.ended?'Replay animation':'Play animation')
+      : 'Pause animation';
+  }
+  viewerMotion.addEventListener('loadedmetadata',function(){viewerMotionToggle.hidden=false;});
+  if(viewerMotion.readyState>=1)viewerMotionToggle.hidden=false;
+  viewerMotion.addEventListener('play',updateViewerMotionToggle);
+  viewerMotion.addEventListener('pause',updateViewerMotionToggle);
+  viewerMotion.addEventListener('ended',updateViewerMotionToggle);
+  viewerMotionToggle.addEventListener('click',function(e){
+    e.stopPropagation();
+    if(viewerMotion.paused)playViewerMotion();else viewerMotion.pause();
+  });
   function go(n){
     n=Math.max(0,Math.min(slides.length-1,n));if(n===cur)return;
     if(cur>=0){
       var old=slides[cur];
+      if(old.contains(viewerMotion)){viewerMotion.pause();viewerMotion.currentTime=0;}
       if(old.contains(demoVideo))stopDemo();
       old.classList.remove('active');old.classList.add('leaving');
       setTimeout(function(){old.classList.remove('leaving');},600);
     }
     cur=n;var s=slides[cur];void s.offsetWidth;s.classList.add('active');countUp(s);
+    if(s.contains(viewerMotion)&&!reduce)playViewerMotion();
     if(s.contains(demoVideo))startDemo();
     bar.style.width=((cur+1)/slides.length*100)+'%';count.textContent=(cur+1)+' / '+slides.length;
     if(location.hash!=='#'+(cur+1))history.replaceState(null,'','#'+(cur+1));
   }
   function next(){go(cur+1)}function prev(){go(cur-1)}
   document.addEventListener('keydown',function(e){
+    if(e.target===viewerMotionToggle&&(e.key===' '||e.key==='Enter'))return;
     if(demoVideo.contains(e.target)&&['ArrowRight','ArrowLeft',' ','Enter'].indexOf(e.key)>-1)return;
     if(['ArrowRight','PageDown',' ','Enter'].indexOf(e.key)>-1){e.preventDefault();next();}
     else if(['ArrowLeft','PageUp','Backspace'].indexOf(e.key)>-1){e.preventDefault();prev();}
